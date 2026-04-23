@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concurso de Méritos y Oposición — BIESS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .iess-header { background: #003580; color: white; padding: 1rem 0; }
+    .card-formulario { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .btn-iess { background: #003580; border-color: #003580; color: white; }
+    .btn-iess:hover { background: #002460; color: white; }
+    .step-badge {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 600;
+    }
+    .step-active  { background: #003580; color: white; }
+    .step-done    { background: #198754; color: white; }
+    .step-pending { background: #dee2e6; color: #6c757d; }
+    .iess-footer  { background: #003580; color: white; padding: .75rem 0; }
+    .iess-logo { height: 55px; width: auto; background: white; border-radius: 6px; padding: 3px 6px; }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<header class="iess-header mb-4">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'postulaciones/img/iess_logo.jpg' %}" alt="Logo IESS" class="iess-logo">
+      <div>
+        <div class="fw-bold fs-5">INSTITUTO ECUATORIANO DE SEGURIDAD SOCIAL</div>
+        <div class="small opacity-75">Concurso Público de Méritos y Oposición — Directorio BIESS</div>
+      </div>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="d-flex align-items-center gap-3">
+      <span class="small opacity-75">{{ user.nombre_completo }}</span>
+      <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light px-3">Cerrar sesión</a>
+    </div>
+    {% endif %}
+  </div>
+</header>
+
+<div class="container mb-5 flex-grow-1" style="max-width: 800px;">
+
+  <!-- Barra de progreso -->
+  <div class="card card-formulario mb-4 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="fw-semibold small">Paso {{ paso }} de {{ total_pasos }}</span>
+      <span class="small text-muted">
+        {% widthratio paso total_pasos 100 as pct %}{{ pct }}% completado
+      </span>
+    </div>
+    <div class="progress mb-3" style="height: 6px;">
+      <div class="progress-bar btn-iess" style="width: {{ pct }}%;"></div>
+    </div>
+    <div class="d-flex justify-content-between">
+      {% for i in "12345678" %}
+      <div class="step-badge {% if forloop.counter < paso %}step-done{% elif forloop.counter == paso %}step-active{% else %}step-pending{% endif %}">
+        {{ forloop.counter }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  {% for msg in messages %}
+  <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show py-2" role="alert">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
+  {% block contenido %}{% endblock %}
+
+</div>
+
+<footer class="iess-footer mt-auto">
+  <div class="container text-center">
+    <span class="small opacity-75">
+      © {% now "Y" %} Instituto Ecuatoriano de Seguridad Social — IESS. Todos los derechos reservados.
+    </span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

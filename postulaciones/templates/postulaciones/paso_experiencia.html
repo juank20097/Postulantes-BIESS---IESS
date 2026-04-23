@@ -1,0 +1,369 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-4">
+  <h5 class="fw-semibold mb-1">Experiencia Profesional</h5>
+  <p class="text-muted small mb-4">
+    El sistema calcula automáticamente el tiempo de experiencia. PDF máx. 2 MB
+    por experiencia. Los campos marcados con
+    <span class="text-danger">*</span> son obligatorios.
+  </p>
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    novalidate
+    id="form-principal"
+  >
+    {% csrf_token %}
+    <div id="data-container"></div>
+
+    <!-- Formulario de ingreso -->
+    <div class="border rounded p-3 mb-3 bg-light">
+      <p class="fw-semibold small mb-3">Agregar experiencia profesional</p>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label"
+            >Tipo <span class="text-danger">*</span></label
+          >
+          <select id="inp-tipo" class="form-select">
+            <option value="">Seleccione...</option>
+            <option value="GENERAL">General</option>
+            <option value="DIRECCION">Dirección</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label"
+            >Actividades relacionadas a
+            <span class="text-danger">*</span></label
+          >
+          <select id="inp-area" class="form-select">
+            <option value="">Seleccione...</option>
+            <option value="FINANZAS">Finanzas</option>
+            <option value="MERCADO_CAP">Mercado de capitales</option>
+            <option value="ADMIN">Administración de empresas</option>
+            <option value="ECONOMIA">Economía</option>
+            <option value="DERECHO">Derecho</option>
+            <option value="AFINES">Materias afines</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label"
+            >Cargo o puesto <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            id="inp-cargo"
+            class="form-control"
+            placeholder="Cargo que ocupó"
+          />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"
+            >Institución o empresa <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            id="inp-institucion"
+            class="form-control"
+            placeholder="Nombre de la institución"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label"
+            >Fecha inicio <span class="text-danger">*</span></label
+          >
+          <input type="date" id="inp-fecha-inicio" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label"
+            >Fecha fin <span class="text-danger">*</span></label
+          >
+          <input type="date" id="inp-fecha-fin" class="form-control" />
+        </div>
+        <div class="col-12">
+          <label class="form-label"
+            >Descripción de funciones <span class="text-danger">*</span></label
+          >
+          <textarea
+            id="inp-descripcion"
+            class="form-control"
+            rows="3"
+            maxlength="1000"
+            placeholder="Máximo 1000 caracteres"
+          ></textarea>
+          <div class="form-text text-end">
+            <span id="char-count">0</span>/1000
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label"
+            >Documento de respaldo (PDF, máx. 2 MB)
+            <span class="text-danger">*</span></label
+          >
+          <input
+            type="file"
+            id="inp-documento"
+            class="form-control"
+            accept=".pdf"
+          />
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-3">
+        <button
+          type="button"
+          class="btn btn-outline-primary px-4"
+          onclick="agregarFila()"
+        >
+          + Agregar experiencia
+        </button>
+      </div>
+      <div
+        id="error-msg"
+        class="text-danger small mt-2"
+        style="display: none"
+      ></div>
+    </div>
+
+    <!-- Tabla temporal (JS) -->
+    <div id="tabla-container" style="display: none" class="mb-4">
+      <p class="fw-semibold small mb-2">Experiencias a registrar</p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Tipo</th>
+              <th>Cargo</th>
+              <th>Institución</th>
+              <th>Área</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Tiempo</th>
+              <th>Documento</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Experiencias ya guardadas en BD -->
+    {% if experiencias %}
+    <div class="mb-4">
+      <p class="fw-semibold small mb-2">Experiencias registradas</p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Tipo</th>
+              <th>Cargo</th>
+              <th>Institución</th>
+              <th>Área</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Tiempo</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in experiencias %}
+            <tr>
+              <td>{{ e.get_tipo_display }}</td>
+              <td>{{ e.cargo }}</td>
+              <td>{{ e.institucion }}</td>
+              <td>{{ e.get_actividades_area_display }}</td>
+              <td>{{ e.fecha_inicio|date:"d/m/Y" }}</td>
+              <td>{{ e.fecha_fin|date:"d/m/Y" }}</td>
+              <td>{{ e.tiempo_calculado.texto }}</td>
+              <td class="text-center">
+                <a
+                  href="{% url 'eliminar_experiencia' e.pk %}"
+                  class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('¿Desea eliminar esta experiencia?')"
+                >
+                  Eliminar
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between mt-2">
+      <a
+        href="{% url 'paso_formacion' %}"
+        class="btn btn-outline-secondary px-4"
+        >← Anterior</a
+      >
+      <button type="submit" class="btn btn-iess px-4">
+        Guardar y continuar →
+      </button>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+  const TIPO_LABELS = {
+    GENERAL: "General",
+    DIRECCION: "Dirección",
+  };
+  const AREA_LABELS = {
+    FINANZAS: "Finanzas",
+    MERCADO_CAP: "Mercado de capitales",
+    ADMIN: "Administración",
+    ECONOMIA: "Economía",
+    DERECHO: "Derecho",
+    AFINES: "Materias afines",
+  };
+
+  let contador = 0;
+  let archivos = {};
+
+  // Contador de caracteres
+  document
+    .getElementById("inp-descripcion")
+    .addEventListener("input", function () {
+      document.getElementById("char-count").textContent = this.value.length;
+    });
+
+  function calcularTiempo(inicio, fin) {
+    const d1 = new Date(inicio);
+    const d2 = new Date(fin);
+    let años = d2.getFullYear() - d1.getFullYear();
+    let meses = d2.getMonth() - d1.getMonth();
+    let dias = d2.getDate() - d1.getDate();
+    if (dias < 0) {
+      meses--;
+      dias += 30;
+    }
+    if (meses < 0) {
+      años--;
+      meses += 12;
+    }
+    return `${años}a ${meses}m ${dias}d`;
+  }
+
+  function agregarFila() {
+    const tipo = document.getElementById("inp-tipo").value;
+    const area = document.getElementById("inp-area").value;
+    const cargo = document.getElementById("inp-cargo").value.trim();
+    const institucion = document.getElementById("inp-institucion").value.trim();
+    const fechaInicio = document.getElementById("inp-fecha-inicio").value;
+    const fechaFin = document.getElementById("inp-fecha-fin").value;
+    const descripcion = document.getElementById("inp-descripcion").value.trim();
+    const docInput = document.getElementById("inp-documento");
+    const errorMsg = document.getElementById("error-msg");
+
+    let faltantes = [];
+    if (!tipo) faltantes.push("Tipo");
+    if (!area) faltantes.push("Actividades relacionadas");
+    if (!cargo) faltantes.push("Cargo o puesto");
+    if (!institucion) faltantes.push("Institución o empresa");
+    if (!fechaInicio) faltantes.push("Fecha inicio");
+    if (!fechaFin) faltantes.push("Fecha fin");
+    if (!descripcion) faltantes.push("Descripción de funciones");
+    if (!docInput.files[0]) faltantes.push("Documento de respaldo");
+
+    if (faltantes.length > 0) {
+      errorMsg.textContent =
+        "Campos obligatorios faltantes: " + faltantes.join(", ");
+      errorMsg.style.display = "block";
+      return;
+    }
+
+    if (new Date(fechaFin) < new Date(fechaInicio)) {
+      errorMsg.textContent =
+        "La fecha de fin no puede ser anterior a la fecha de inicio.";
+      errorMsg.style.display = "block";
+      return;
+    }
+
+    const doc = docInput.files[0];
+    if (doc.size > 2 * 1024 * 1024) {
+      errorMsg.textContent = "El documento no puede superar 2 MB.";
+      errorMsg.style.display = "block";
+      return;
+    }
+    errorMsg.style.display = "none";
+
+    const id = contador++;
+    archivos[id] = doc;
+    const tiempo = calcularTiempo(fechaInicio, fechaFin);
+
+    const tbody = document.getElementById("tabla-body");
+    const tr = document.createElement("tr");
+    tr.id = "fila-" + id;
+    tr.innerHTML = `
+      <td>${TIPO_LABELS[tipo] || tipo}</td>
+      <td>${cargo}</td>
+      <td>${institucion}</td>
+      <td>${AREA_LABELS[area] || area}</td>
+      <td>${fechaInicio}</td>
+      <td>${fechaFin}</td>
+      <td>${tiempo}</td>
+      <td>${doc.name}</td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                onclick="eliminarFila(${id})">Eliminar</button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    const container = document.getElementById("data-container");
+    container.innerHTML += `
+      <input type="hidden" name="exp_tipo_${id}"         value="${tipo}">
+      <input type="hidden" name="exp_area_${id}"         value="${area}">
+      <input type="hidden" name="exp_cargo_${id}"        value="${cargo}">
+      <input type="hidden" name="exp_institucion_${id}"  value="${institucion}">
+      <input type="hidden" name="exp_fecha_inicio_${id}" value="${fechaInicio}">
+      <input type="hidden" name="exp_fecha_fin_${id}"    value="${fechaFin}">
+      <input type="hidden" name="exp_descripcion_${id}"  value="${descripcion}">`;
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.name = `exp_documento_${id}`;
+    fileInput.id = `file-input-${id}`;
+    fileInput.style.display = "none";
+    container.appendChild(fileInput);
+    const dt = new DataTransfer();
+    dt.items.add(doc);
+    fileInput.files = dt.files;
+
+    document.getElementById("tabla-container").style.display = "block";
+
+    document.getElementById("inp-tipo").value = "";
+    document.getElementById("inp-area").value = "";
+    document.getElementById("inp-cargo").value = "";
+    document.getElementById("inp-institucion").value = "";
+    document.getElementById("inp-fecha-inicio").value = "";
+    document.getElementById("inp-fecha-fin").value = "";
+    document.getElementById("inp-descripcion").value = "";
+    document.getElementById("char-count").textContent = "0";
+    docInput.value = "";
+  }
+
+  function eliminarFila(id) {
+    document.getElementById("fila-" + id).remove();
+    delete archivos[id];
+    [
+      "tipo",
+      "area",
+      "cargo",
+      "institucion",
+      "fecha_inicio",
+      "fecha_fin",
+      "descripcion",
+    ].forEach((campo) => {
+      const el = document.querySelector(`input[name="exp_${campo}_${id}"]`);
+      if (el) el.remove();
+    });
+    const fi = document.getElementById(`file-input-${id}`);
+    if (fi) fi.remove();
+    if (document.getElementById("tabla-body").children.length === 0) {
+      document.getElementById("tabla-container").style.display = "none";
+    }
+  }
+</script>
+{% endblock %} {% endblock %}

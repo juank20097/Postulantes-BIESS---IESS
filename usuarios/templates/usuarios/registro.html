@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro — BIESS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .card-auth { border: none; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .header-auth { background: #003580; color: white; border-radius: 16px 16px 0 0; padding: 2rem; text-align: center; }
+    .btn-iess { background: #003580; border-color: #003580; color: white; width: 100%; padding: .75rem; font-size: 1rem; }
+    .btn-iess:hover { background: #002460; color: white; }
+    .datos-rc { background: #f0fff4; border: 1px solid #198754; border-radius: 8px; padding: .75rem 1rem; }
+  </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100">
+
+<div class="col-11 col-sm-8 col-md-6 col-lg-4">
+  <div class="card card-auth">
+
+    <div class="header-auth">
+      <h5 class="mb-1 fw-bold">IESS — BIESS</h5>
+      <p class="mb-0 small opacity-75">Concurso Público de Méritos y Oposición</p>
+      <h6 class="mt-3 mb-0">Crear cuenta</h6>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Cédula -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Número de cédula <span class="text-danger">*</span>
+          </label>
+          <input type="text" name="cedula" id="id_cedula"
+                 class="form-control" maxlength="10"
+                 placeholder="Ingrese su cédula"
+                 value="{{ form.cedula.value|default:'' }}"
+                 autocomplete="off">
+          <div id="cedula-feedback" class="mt-1 small"></div>
+          {% if form.cedula.errors %}
+          <div class="text-danger small mt-1">{{ form.cedula.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Datos RC — se llenan automáticamente al salir del campo cédula -->
+        <div id="bloque-rc" class="datos-rc mb-3" style="display:none;">
+          <p class="fw-semibold small text-success mb-2">✓ Identidad verificada con el Registro Civil</p>
+          <div class="row g-1 small">
+            <div class="col-6"><span class="text-muted">Nombres:</span> <span id="rc-nombres" class="fw-semibold"></span></div>
+            <div class="col-6"><span class="text-muted">Apellidos:</span> <span id="rc-apellidos" class="fw-semibold"></span></div>
+            <div class="col-6"><span class="text-muted">Género:</span> <span id="rc-genero"></span></div>
+            <div class="col-6"><span class="text-muted">Nacimiento:</span> <span id="rc-fecha"></span></div>
+            <div class="col-12"><span class="text-muted">Estado civil:</span> <span id="rc-estado-civil"></span></div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Correo electrónico <span class="text-danger">*</span>
+          </label>
+          <input type="email" name="email" class="form-control"
+                 placeholder="correo@ejemplo.com"
+                 value="{{ form.email.value|default:'' }}">
+          {% if form.email.errors %}
+          <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Contraseña -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Contraseña <span class="text-danger">*</span>
+          </label>
+          <input type="password" name="password1" class="form-control"
+                 placeholder="Mínimo 8 caracteres">
+          {% if form.password1.errors %}
+          <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
+          {% endif %}
+          <div class="form-text">Mínimo 8 caracteres.</div>
+        </div>
+
+        <!-- Confirmar contraseña -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold">
+            Confirmar contraseña <span class="text-danger">*</span>
+          </label>
+          <input type="password" name="password2" class="form-control"
+                 placeholder="Repita su contraseña">
+          {% if form.password2.errors %}
+          <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
+          {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-iess mb-3">Crear cuenta</button>
+
+        <p class="text-center mb-0 small">
+          ¿Ya tiene cuenta?
+          <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">Iniciar sesión</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const ESTADO_CIVIL_LABELS = {
+    'SOLTERO': 'Soltero/a', 'CASADO': 'Casado/a',
+    'DIVORCIADO': 'Divorciado/a', 'VIUDO': 'Viudo/a',
+    'UNION_HECHO': 'Unión de hecho',
+  };
+
+  document.getElementById('id_cedula').addEventListener('blur', async function () {
+    const cedula   = this.value.trim();
+    const feedback = document.getElementById('cedula-feedback');
+    const bloqueRc = document.getElementById('bloque-rc');
+
+    feedback.innerHTML = '';
+    bloqueRc.style.display = 'none';
+    this.classList.remove('is-valid', 'is-invalid');
+
+    if (!cedula || cedula.length !== 10 || !/^\d+$/.test(cedula)) return;
+
+    feedback.innerHTML = '<span class="text-muted">Consultando Registro Civil...</span>';
+
+    try {
+      const resp = await fetch('{% url "consultar_cedula_ajax" %}', {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  '{{ csrf_token }}',
+        },
+        body: JSON.stringify({ cedula }),
+      });
+      const data = await resp.json();
+
+      if (data.ok) {
+        document.getElementById('rc-nombres').textContent    = data.datos.nombres;
+        document.getElementById('rc-apellidos').textContent  = data.datos.apellidos;
+        document.getElementById('rc-genero').textContent     = data.datos.genero_texto;
+        document.getElementById('rc-fecha').textContent      = data.datos.fecha_nacimiento;
+        document.getElementById('rc-estado-civil').textContent = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
+        bloqueRc.style.display = 'block';
+        feedback.innerHTML     = '';
+        this.classList.add('is-valid');
+      } else {
+        feedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
+        this.classList.add('is-invalid');
+      }
+    } catch (e) {
+      feedback.innerHTML = '<span class="text-danger">Error de conexión.</span>';
+    }
+  });
+</script>
+</body>
+</html>

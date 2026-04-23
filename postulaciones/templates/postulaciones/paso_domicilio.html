@@ -1,0 +1,157 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-4">
+  <h5 class="fw-semibold mb-1">Domicilio y Contacto</h5>
+  <p class="text-muted small mb-4">
+    Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+  </p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >País <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="pais"
+          class="form-control"
+          value="{{ postulante.pais }}"
+          required
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Provincia <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="provincia"
+          class="form-control"
+          value="{{ postulante.provincia }}"
+          required
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Ciudad <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="ciudad"
+          class="form-control"
+          value="{{ postulante.ciudad }}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Calle principal <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="calle_principal"
+          class="form-control"
+          value="{{ postulante.calle_principal }}"
+          required
+        />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold"
+          >Número <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="numero"
+          class="form-control"
+          value="{{ postulante.numero }}"
+          required
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Calle secundaria <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="calle_secundaria"
+          class="form-control"
+          value="{{ postulante.calle_secundaria }}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Sector <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="sector_domicilio"
+          class="form-control"
+          value="{{ postulante.sector_domicilio }}"
+          required
+        />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Referencia <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="referencia"
+          class="form-control"
+          value="{{ postulante.referencia }}"
+          required
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Teléfono celular <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="telefono_celular"
+          class="form-control"
+          maxlength="15"
+          value="{{ postulante.telefono_celular }}"
+          required
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Teléfono domicilio</label>
+        <input
+          type="text"
+          name="telefono_domicilio"
+          class="form-control"
+          maxlength="15"
+          value="{{ postulante.telefono_domicilio }}"
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Correo electrónico secundario</label
+        >
+        <input
+          type="email"
+          name="email_secundario"
+          class="form-control"
+          value="{{ postulante.email_secundario }}"
+        />
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <a
+        href="{% url 'paso_info_personal' %}"
+        class="btn btn-outline-secondary px-4"
+        >← Anterior</a
+      >
+      <button type="submit" class="btn btn-iess px-4">
+        Guardar y continuar →
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

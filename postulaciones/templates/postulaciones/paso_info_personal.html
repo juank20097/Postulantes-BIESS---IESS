@@ -1,0 +1,218 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-4">
+  <h5 class="fw-semibold mb-1">Información Personal</h5>
+  <p class="text-muted small mb-4">
+    Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+  </p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Nombres <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="nombres"
+          class="form-control"
+          value="{{ postulante.nombres }}"
+          required
+        />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Apellidos <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="apellidos"
+          class="form-control"
+          value="{{ postulante.apellidos }}"
+          required
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Género <span class="text-danger">*</span></label
+        >
+        <select name="genero" class="form-select" required>
+          <option value="">Seleccione...</option>
+          <option
+            value="M"
+            {%
+            if
+            postulante.genero=""
+            ="M"
+            %}selected{%
+            endif
+            %}
+          >
+            Masculino
+          </option>
+          <option
+            value="F"
+            {%
+            if
+            postulante.genero=""
+            ="F"
+            %}selected{%
+            endif
+            %}
+          >
+            Femenino
+          </option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Fecha de nacimiento <span class="text-danger">*</span></label
+        >
+        <input
+          type="date"
+          name="fecha_nacimiento"
+          class="form-control"
+          value="{{ postulante.fecha_nacimiento|date:'Y-m-d' }}"
+          required
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"
+          >Nacionalidad <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="nacionalidad"
+          class="form-control"
+          value="{{ postulante.nacionalidad }}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-semibold"
+          >Estado civil <span class="text-danger">*</span></label
+        >
+        <select
+          name="estado_civil"
+          class="form-select"
+          id="id_estado_civil"
+          required
+        >
+          <option value="">Seleccione...</option>
+          <option
+            value="SOLTERO"
+            {%
+            if
+            postulante.estado_civil=""
+            ="SOLTERO"
+            %}selected{%
+            endif
+            %}
+          >
+            Soltero/a
+          </option>
+          <option
+            value="CASADO"
+            {%
+            if
+            postulante.estado_civil=""
+            ="CASADO"
+            %}selected{%
+            endif
+            %}
+          >
+            Casado/a
+          </option>
+          <option
+            value="DIVORCIADO"
+            {%
+            if
+            postulante.estado_civil=""
+            ="DIVORCIADO"
+            %}selected{%
+            endif
+            %}
+          >
+            Divorciado/a
+          </option>
+          <option
+            value="VIUDO"
+            {%
+            if
+            postulante.estado_civil=""
+            ="VIUDO"
+            %}selected{%
+            endif
+            %}
+          >
+            Viudo/a
+          </option>
+          <option
+            value="UNION_HECHO"
+            {%
+            if
+            postulante.estado_civil=""
+            ="UNION_HECHO"
+            %}selected{%
+            endif
+            %}
+          >
+            Unión de hecho
+          </option>
+        </select>
+      </div>
+
+      <!-- Datos cónyuge — condicional -->
+      <div id="bloque-conyuge" class="col-12" style="display: none">
+        <div class="row g-3 border rounded p-3 bg-light">
+          <div class="col-12">
+            <p class="fw-semibold mb-0 small">
+              Datos del cónyuge / conviviente
+            </p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nombres y apellidos</label>
+            <input
+              type="text"
+              name="conyuge_nombres"
+              class="form-control"
+              value="{{ postulante.conyuge_nombres }}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cédula</label>
+            <input
+              type="text"
+              name="conyuge_cedula"
+              class="form-control"
+              maxlength="10"
+              value="{{ postulante.conyuge_cedula }}"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button type="submit" class="btn btn-iess px-4">
+        Guardar y continuar →
+      </button>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+  const estadoCivil = document.getElementById("id_estado_civil");
+  const bloqueConyugue = document.getElementById("bloque-conyuge");
+  function toggleConyuge() {
+    const val = estadoCivil.value;
+    bloqueConyugue.style.display =
+      val === "CASADO" || val === "UNION_HECHO" ? "block" : "none";
+  }
+  estadoCivil.addEventListener("change", toggleConyuge);
+  toggleConyuge();
+</script>
+{% endblock %} {% endblock %}

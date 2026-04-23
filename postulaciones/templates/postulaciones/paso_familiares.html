@@ -1,0 +1,260 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-4">
+  <h5 class="fw-semibold mb-1">
+    Información Adicional — Familiares en IESS/BIESS
+  </h5>
+  <p class="text-muted small mb-4">
+    Registre familiares hasta segundo grado de consanguinidad y cuarto de
+    afinidad que trabajen en el IESS o BIESS.
+  </p>
+
+  <form method="post" novalidate id="form-principal">
+    {% csrf_token %}
+
+    <!-- Campos ocultos donde se acumula la data -->
+    <div id="data-container"></div>
+
+    <!-- Formulario de ingreso -->
+    <div class="border rounded p-3 mb-3 bg-light">
+      <p class="fw-semibold small mb-3">Agregar familiar</p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombres y apellidos</label>
+          <input
+            type="text"
+            id="inp-nombres"
+            class="form-control"
+            placeholder="Nombres completos"
+          />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Parentesco</label>
+          <select id="inp-parentesco" class="form-select">
+            <option value="">Seleccione...</option>
+            <option value="CONYUGE">Cónyuge</option>
+            <option value="CONVIVIENTE">Conviviente</option>
+            <option value="HIJO">Hijo/a</option>
+            <option value="PADRE">Padre</option>
+            <option value="MADRE">Madre</option>
+            <option value="HERMANO">Hermano/a</option>
+            <option value="CUÑADO">Cuñado/a</option>
+            <option value="SUEGRO">Suegro/a</option>
+            <option value="YERNO">Yerno</option>
+            <option value="NUERA">Nuera</option>
+            <option value="NIETO">Nieto/a</option>
+            <option value="TIO">Tío/a</option>
+            <option value="SOBRINO">Sobrino/a</option>
+            <option value="PRIMO_HERMANO">Primo hermano/a</option>
+            <option value="HIJO_POLITICO">Hijo político</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Institución</label>
+          <select id="inp-institucion" class="form-select">
+            <option value="">Seleccione...</option>
+            <option value="IESS">IESS</option>
+            <option value="BIESS">BIESS</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Área</label>
+          <input
+            type="text"
+            id="inp-area"
+            class="form-control"
+            placeholder="Área donde trabaja"
+          />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Cargo</label>
+          <input
+            type="text"
+            id="inp-cargo"
+            class="form-control"
+            placeholder="Cargo que ocupa"
+          />
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-3">
+        <button
+          type="button"
+          class="btn btn-outline-primary px-4"
+          onclick="agregarFila()"
+        >
+          + Agregar familiar
+        </button>
+      </div>
+      <div id="error-msg" class="text-danger small mt-2" style="display: none">
+        Todos los campos son obligatorios.
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div id="tabla-container" style="display: none" class="mb-4">
+      <p class="fw-semibold small mb-2">Familiares a registrar</p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Nombres y apellidos</th>
+              <th>Parentesco</th>
+              <th>Institución</th>
+              <th>Área</th>
+              <th>Cargo</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Familiares ya guardados en BD -->
+    {% if familiares %}
+    <div class="mb-4">
+      <p class="fw-semibold small mb-2">Familiares ya guardados</p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Nombres y apellidos</th>
+              <th>Parentesco</th>
+              <th>Institución</th>
+              <th>Área</th>
+              <th>Cargo</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for familiar in familiares %}
+            <tr>
+              <td>{{ familiar.nombres }}</td>
+              <td>{{ familiar.get_parentesco_display }}</td>
+              <td>{{ familiar.get_institucion_display }}</td>
+              <td>{{ familiar.area }}</td>
+              <td>{{ familiar.cargo }}</td>
+              <td class="text-center">
+                <a
+                  href="{% url 'eliminar_familiar' familiar.pk %}"
+                  class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('¿Desea eliminar este familiar?')"
+                >
+                  Eliminar
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between mt-2">
+      <a href="{% url 'paso_sector' %}" class="btn btn-outline-secondary px-4"
+        >← Anterior</a
+      >
+      <button type="submit" class="btn btn-iess px-4">
+        Guardar y continuar →
+      </button>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+  const PARENTESCO_LABELS = {
+    CONYUGE: "Cónyuge",
+    CONVIVIENTE: "Conviviente",
+    HIJO: "Hijo/a",
+    PADRE: "Padre",
+    MADRE: "Madre",
+    HERMANO: "Hermano/a",
+    CUÑADO: "Cuñado/a",
+    SUEGRO: "Suegro/a",
+    YERNO: "Yerno",
+    NUERA: "Nuera",
+    NIETO: "Nieto/a",
+    TIO: "Tío/a",
+    SOBRINO: "Sobrino/a",
+    PRIMO_HERMANO: "Primo hermano/a",
+    HIJO_POLITICO: "Hijo político",
+  };
+
+  let filas = [];
+  let contador = 0;
+
+  function agregarFila() {
+    const nombres = document.getElementById("inp-nombres").value.trim();
+    const parentesco = document.getElementById("inp-parentesco").value;
+    const institucion = document.getElementById("inp-institucion").value;
+    const area = document.getElementById("inp-area").value.trim();
+    const cargo = document.getElementById("inp-cargo").value.trim();
+    const errorMsg = document.getElementById("error-msg");
+
+    if (!nombres || !parentesco || !institucion || !area || !cargo) {
+      errorMsg.style.display = "block";
+      return;
+    }
+    errorMsg.style.display = "none";
+
+    const id = contador++;
+    filas.push({ id, nombres, parentesco, institucion, area, cargo });
+
+    // Agregar fila a la tabla visual
+    const tbody = document.getElementById("tabla-body");
+    const tr = document.createElement("tr");
+    tr.id = "fila-" + id;
+    tr.innerHTML = `
+      <td>${nombres}</td>
+      <td>${PARENTESCO_LABELS[parentesco] || parentesco}</td>
+      <td>${institucion}</td>
+      <td>${area}</td>
+      <td>${cargo}</td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                onclick="eliminarFila(${id})">Eliminar</button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    // Agregar inputs ocultos al form
+    const container = document.getElementById("data-container");
+    container.innerHTML += `
+      <input type="hidden" name="familiar_nombres_${id}"     value="${nombres}">
+      <input type="hidden" name="familiar_parentesco_${id}"  value="${parentesco}">
+      <input type="hidden" name="familiar_institucion_${id}" value="${institucion}">
+      <input type="hidden" name="familiar_area_${id}"        value="${area}">
+      <input type="hidden" name="familiar_cargo_${id}"       value="${cargo}">`;
+
+    // Mostrar tabla
+    document.getElementById("tabla-container").style.display = "block";
+
+    // Limpiar inputs
+    document.getElementById("inp-nombres").value = "";
+    document.getElementById("inp-parentesco").value = "";
+    document.getElementById("inp-institucion").value = "";
+    document.getElementById("inp-area").value = "";
+    document.getElementById("inp-cargo").value = "";
+  }
+
+  function eliminarFila(id) {
+    // Quitar fila de la tabla
+    document.getElementById("fila-" + id).remove();
+    filas = filas.filter((f) => f.id !== id);
+
+    // Quitar inputs ocultos
+    ["nombres", "parentesco", "institucion", "area", "cargo"].forEach(
+      (campo) => {
+        const el = document.querySelector(
+          `input[name="familiar_${campo}_${id}"]`,
+        );
+        if (el) el.remove();
+      },
+    );
+
+    if (filas.length === 0) {
+      document.getElementById("tabla-container").style.display = "none";
+    }
+  }
+</script>
+{% endblock %} {% endblock %}

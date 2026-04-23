@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administración — Postulaciones BIESS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .iess-header { background: #003580; color: white; padding: 1rem 0; }
+    .iess-footer { background: #003580; color: white; padding: .75rem 0; }
+    .iess-logo { height: 55px; width: auto; background: white; border-radius: 6px; padding: 3px 6px; }
+    .card-stat { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .stat-number { font-size: 2rem; font-weight: 700; }
+    .btn-iess { background: #003580; border-color: #003580; color: white; }
+    .btn-iess:hover { background: #002460; color: white; }
+    .table-hover tbody tr:hover { background-color: #f0f4f8; }
+    .badge-BORRADOR     { background-color: #ffc107; color: #000; }
+    .badge-ENVIADO      { background-color: #198754; color: #fff; }
+    .badge-EN_REVISION  { background-color: #0dcaf0; color: #000; }
+    .badge-HABILITADO   { background-color: #0d6efd; color: #fff; }
+    .badge-INHABILITADO { background-color: #dc3545; color: #fff; }
+    .badge-FASE_MERITOS { background-color: #6f42c1; color: #fff; }
+    .badge-EVAL_TECNICA { background-color: #fd7e14; color: #fff; }
+    .badge-FINALIZADO   { background-color: #20c997; color: #fff; }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<header class="iess-header mb-4">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'postulaciones/img/iess_logo.jpg' %}" alt="Logo IESS" class="iess-logo">
+      <div>
+        <div class="fw-bold fs-5">INSTITUTO ECUATORIANO DE SEGURIDAD SOCIAL</div>
+        <div class="small opacity-75">Panel de Administración — Concurso Directorio BIESS</div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="small opacity-75">{{ request.user.nombre_completo }}</span>
+      <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light px-3">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<div class="container mb-5 flex-grow-1">
+
+  {% for msg in messages %}
+  <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show py-2">
+    {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
+  <!-- Dashboard -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number text-primary">{{ total }}</div>
+        <div class="small text-muted">Total postulantes</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number text-success">{{ total_enviados }}</div>
+        <div class="small text-muted">Enviados</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number text-warning">{{ total_borradores }}</div>
+        <div class="small text-muted">Borradores</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number" style="color:#003580;">{{ total_afiliados }}</div>
+        <div class="small text-muted">Afiliados</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number" style="color:#6f42c1;">{{ total_jubilados }}</div>
+        <div class="small text-muted">Jubilados</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="card card-stat p-3 text-center">
+        <div class="stat-number" style="color:#fd7e14;">{{ total_empleadores }}</div>
+        <div class="small text-muted">Empleadores</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 rounded-3 shadow-sm mb-4 p-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">Buscar</label>
+        <input type="text" name="buscar" class="form-control form-control-sm"
+               placeholder="Cédula, nombres o apellidos" value="{{ buscar }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Sector</label>
+        <select name="sector" class="form-select form-select-sm">
+          <option value="">Todos</option>
+          {% for val, label in SECTOR_CHOICES %}
+          <option value="{{ val }}" {% if sector_actual == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Estado</label>
+        <select name="estado" class="form-select form-select-sm">
+          <option value="">Todos</option>
+          {% for val, label in ESTADO_CHOICES %}
+          <option value="{{ val }}" {% if estado_actual == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-iess btn-sm w-100">Filtrar</button>
+      </div>
+      <div class="col-md-3 text-end">
+        <a href="{% url 'exportar_excel' %}" class="btn btn-success btn-sm px-3">Exportar Excel</a>
+        {% if buscar or sector_actual or estado_actual %}
+        <a href="{% url 'admin_postulaciones' %}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card border-0 rounded-3 shadow-sm">
+    <div class="card-body p-0">
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+        <span class="fw-semibold small">{{ postulantes.count }} postulante(s) encontrado(s)</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Código</th>
+              <th>Cédula</th>
+              <th>Apellidos y nombres</th>
+              <th>Sector</th>
+              <th>Estado</th>
+              <th>Correo</th>
+              <th>Registro</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in postulantes %}
+            <tr>
+              <td class="fw-semibold">{{ p.codigo_unico }}</td>
+              <td>{{ p.usuario.cedula }}</td>
+              <td>{{ p.apellidos }} {{ p.nombres }}</td>
+              <td>
+                {% if p.sector %}
+                <span class="badge bg-secondary">{{ p.get_sector_display }}</span>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td><span class="badge badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+              <td>{{ p.usuario.email }}</td>
+              <td>{{ p.creado_en|date:"d/m/Y" }}</td>
+              <td class="text-center">
+                <div class="d-flex gap-1 justify-content-center">
+                  <a href="{% url 'admin_pdf_postulante' p.pk %}" class="btn btn-sm btn-outline-primary">PDF</a>
+                  <button type="button" class="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="modal" data-bs-target="#modal-estado-{{ p.pk }}">
+                    Estado
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Modal cambiar estado -->
+            <div class="modal fade" id="modal-estado-{{ p.pk }}" tabindex="-1">
+              <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                  <div class="modal-header py-2">
+                    <h6 class="modal-title">Cambiar estado — {{ p.codigo_unico }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="post" action="{% url 'admin_cambiar_estado' p.pk %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                      <select name="estado" class="form-select form-select-sm">
+                        {% for val, label in ESTADO_CHOICES %}
+                        <option value="{{ val }}" {% if p.estado == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="modal-footer py-2">
+                      <button type="submit" class="btn btn-iess btn-sm">Guardar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">No se encontraron postulantes.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="iess-footer mt-auto">
+  <div class="container text-center">
+    <span class="small opacity-75">
+      © {% now "Y" %} Instituto Ecuatoriano de Seguridad Social — IESS. Todos los derechos reservados.
+    </span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-5 text-center">
+  <div class="mb-3" style="font-size: 3rem">✅</div>
+  <h4 class="fw-bold mb-2">¡Postulación enviada correctamente!</h4>
+  <p class="text-muted mb-1">Código de postulación:</p>
+  <h5 class="fw-bold text-primary mb-4">{{ postulante.codigo_unico }}</h5>
+  <p class="small text-muted">
+    Recibirá una confirmación en su correo electrónico
+    <strong>{{ postulante.usuario.email }}</strong>. Guarde su código de
+    postulación para hacer seguimiento del proceso.
+  </p>
+</div>
+{% endblock %}

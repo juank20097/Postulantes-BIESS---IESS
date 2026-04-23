@@ -1,0 +1,182 @@
+{% extends "postulaciones/base_formulario.html" %} {% block contenido %}
+<div class="card card-formulario p-4">
+  <h5 class="fw-semibold mb-1">Sector de Postulación</h5>
+  <p class="text-muted small mb-4">Seleccione el cargo al que postula.</p>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-4">
+      <label class="form-label fw-semibold"
+        >Cargo al que postula <span class="text-danger">*</span></label
+      >
+      <div class="d-flex flex-column gap-2">
+        <div class="form-check border rounded p-3">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="sector"
+            id="sector_AFILIADO"
+            value="AFILIADO"
+            {%
+            if
+            postulante.sector=""
+            ="AFILIADO"
+            %}checked{%
+            endif
+            %}
+            required
+          />
+          <label class="form-check-label" for="sector_AFILIADO"
+            >Miembro Principal y Alterno en Representación del Sector Afiliados
+            ante el Directorio del BIESS</label
+          >
+        </div>
+        <div class="form-check border rounded p-3">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="sector"
+            id="sector_JUBILADO"
+            value="JUBILADO"
+            {%
+            if
+            postulante.sector=""
+            ="JUBILADO"
+            %}checked{%
+            endif
+            %}
+            required
+          />
+          <label class="form-check-label" for="sector_JUBILADO"
+            >Miembro Principal y Alterno en Representación del Sector Jubilados
+            ante el Directorio del BIESS</label
+          >
+        </div>
+        <div class="form-check border rounded p-3">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="sector"
+            id="sector_EMPLEADOR"
+            value="EMPLEADOR"
+            {%
+            if
+            postulante.sector=""
+            ="EMPLEADOR"
+            %}checked{%
+            endif
+            %}
+            required
+          />
+          <label class="form-check-label" for="sector_EMPLEADOR"
+            >Miembro Principal y Alterno en Representación del Sector Empleador
+            ante el Directorio del BIESS</label
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold"
+        >¿Se encuentra respaldado por una organización?
+        <span class="text-danger">*</span></label
+      >
+      <div class="d-flex gap-4">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="tiene_organizacion"
+            id="org_si"
+            value="True"
+            {%
+            if
+            postulante.tiene_organizacion=""
+            ="True"
+            %}checked{%
+            endif
+            %}
+          />
+          <label class="form-check-label" for="org_si">Sí</label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="tiene_organizacion"
+            id="org_no"
+            value="False"
+            {%
+            if
+            postulante.tiene_organizacion=""
+            ="False"
+            %}checked{%
+            endif
+            %}
+          />
+          <label class="form-check-label" for="org_no">No</label>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="bloque-organizacion"
+      style="display:{% if postulante.tiene_organizacion == True %}block{% else %}none{% endif %};"
+    >
+      <div class="row g-3 border rounded p-3 bg-light mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold"
+            >Nombre de la organización <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            name="nombre_organizacion"
+            class="form-control"
+            value="{{ postulante.nombre_organizacion }}"
+          />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold"
+            >Documento de respaldo (PDF, máx. 4 MB)
+            <span class="text-danger">*</span></label
+          >
+          <input
+            type="file"
+            name="doc_organizacion"
+            class="form-control"
+            accept=".pdf"
+          />
+          {% if postulante.doc_organizacion %}
+          <div class="form-text">
+            Archivo actual: {{ postulante.doc_organizacion.name }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <a
+        href="{% url 'paso_domicilio' %}"
+        class="btn btn-outline-secondary px-4"
+        >← Anterior</a
+      >
+      <button type="submit" class="btn btn-iess px-4">
+        Guardar y continuar →
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  function toggleOrg() {
+    const si = document.getElementById("org_si").checked;
+    document.getElementById("bloque-organizacion").style.display = si
+      ? "block"
+      : "none";
+  }
+  document.getElementById("org_si").addEventListener("change", toggleOrg);
+  document.getElementById("org_no").addEventListener("change", toggleOrg);
+</script>
+{% endblock %}
