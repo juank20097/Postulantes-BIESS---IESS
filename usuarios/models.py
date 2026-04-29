@@ -144,3 +144,23 @@ class RecuperacionPassword(models.Model):
 
     def __str__(self):
         return f'Recuperación {self.usuario.cedula} — usado: {self.usado}'
+
+class OTPRegistro(models.Model):
+    """
+    OTP de verificación post-registro antes de acceder al formulario.
+    Expira en 5 minutos.
+    """
+    usuario   = models.OneToOneField(
+        PostulanteUser, on_delete=models.CASCADE, related_name='otp_registro'
+    )
+    codigo    = models.CharField(max_length=6)
+    expira    = models.DateTimeField()
+    verificado = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def esta_vigente(self):
+        from django.utils import timezone
+        return not self.verificado and timezone.now() < self.expira
+
+    def __str__(self):
+        return f'OTP {self.usuario.cedula} — verificado: {self.verificado}'

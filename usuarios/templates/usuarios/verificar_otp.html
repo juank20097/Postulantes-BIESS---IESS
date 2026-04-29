@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verificación OTP — BIESS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .card-auth { border: none; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .header-auth { background: #003580; color: white; border-radius: 16px 16px 0 0; padding: 2rem; text-align: center; }
+    .btn-iess { background: #003580; border-color: #003580; color: white; width: 100%; padding: .75rem; font-size: 1rem; }
+    .btn-iess:hover { background: #002460; color: white; }
+    .otp-input { letter-spacing: 10px; font-size: 2rem; text-align: center; font-weight: bold; }
+  </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100">
+
+<div class="col-11 col-sm-8 col-md-6 col-lg-4">
+  <div class="card card-auth">
+
+    <div class="header-auth">
+      <h5 class="mb-1 fw-bold">IESS — BIESS</h5>
+      <p class="mb-0 small opacity-75">Concurso Público de Méritos y Oposición</p>
+      <h6 class="mt-3 mb-0">Verificación de identidad</h6>
+    </div>
+
+    <div class="card-body p-4">
+
+      <p class="text-muted small text-center mb-4">
+        Se envió un código de 6 dígitos a<br>
+        <strong>{{ email }}</strong><br>
+        <span class="text-danger small">Válido por 5 minutos.</span>
+      </p>
+
+      {% if error %}
+        <div class="alert alert-danger py-2 text-center">{{ error }}</div>
+      {% endif %}
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-info py-2 text-center">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" id="form-otp">
+        {% csrf_token %}
+        <div class="mb-4">
+          <input type="text" name="codigo" id="id_codigo"
+                 class="form-control otp-input"
+                 maxlength="6" placeholder="000000"
+                 autocomplete="off" autofocus
+                 inputmode="numeric" pattern="[0-9]*">
+        </div>
+        <button type="submit" class="btn btn-iess mb-3">
+          Ingresar
+        </button>
+      </form>
+
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="reenviar" value="1"
+                class="btn btn-outline-secondary w-100 btn-sm mb-3">
+          Reenviar código
+        </button>
+      </form>
+
+      <a href="{% url 'login' %}" class="btn btn-outline-danger w-100 btn-sm">
+        Volver al inicio de sesión
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Solo permitir dígitos en el input OTP
+  document.getElementById('id_codigo').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
+  });
+
+  // Auto-submit cuando se ingresan 6 dígitos
+  document.getElementById('id_codigo').addEventListener('input', function () {
+    if (this.value.length === 6) {
+      document.getElementById('form-otp').submit();
+    }
+  });
+</script>
+
+</body>
+</html>

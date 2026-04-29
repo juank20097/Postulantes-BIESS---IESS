@@ -36,6 +36,14 @@
       <form method="post" novalidate id="form-registro">
         {% csrf_token %}
 
+        <!-- Campos hidden para preservar datos RC entre POSTs — populados desde request.POST -->
+        <input type="hidden" id="hidden-rc-nombres"      name="rc_nombres"      value="{{ request.POST.rc_nombres }}">
+        <input type="hidden" id="hidden-rc-apellidos"    name="rc_apellidos"    value="{{ request.POST.rc_apellidos }}">
+        <input type="hidden" id="hidden-rc-genero"       name="rc_genero"       value="{{ request.POST.rc_genero }}">
+        <input type="hidden" id="hidden-rc-fecha"        name="rc_fecha"        value="{{ request.POST.rc_fecha }}">
+        <input type="hidden" id="hidden-rc-estado-civil" name="rc_estado_civil" value="{{ request.POST.rc_estado_civil }}">
+        <input type="hidden" id="hidden-rc-dactilar"     name="rc_dactilar"     value="{{ request.POST.rc_dactilar }}">
+
         <!-- Cédula -->
         <div class="mb-3">
           <label class="form-label fw-semibold">
@@ -141,6 +149,22 @@
   </div>
 </div>
 
+<!-- Modal de errores del servidor -->
+<div class="modal fade" id="modalErrores" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title mb-0">⚠ Errores en el formulario</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modal-errores-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const ESTADO_CIVIL_LABELS = {
@@ -152,25 +176,23 @@
   let cedulaVerificada = false;
 
   async function verificarCedula() {
-    const cedula          = document.getElementById('id_cedula').value.trim();
-    const codigoDactilar  = document.getElementById('id_dactilar').value.trim();
-    const cedulaFeedback  = document.getElementById('cedula-feedback');
-    const dactilarFeedback= document.getElementById('dactilar-feedback');
-    const bloqueRc        = document.getElementById('bloque-rc');
-    const bloqueRegistro  = document.getElementById('bloque-registro');
-    const btnVerificar    = document.getElementById('btn-verificar');
+    const cedula           = document.getElementById('id_cedula').value.trim();
+    const codigoDactilar   = document.getElementById('id_dactilar').value.trim();
+    const cedulaFeedback   = document.getElementById('cedula-feedback');
+    const dactilarFeedback = document.getElementById('dactilar-feedback');
+    const bloqueRc         = document.getElementById('bloque-rc');
+    const bloqueRegistro   = document.getElementById('bloque-registro');
+    const btnVerificar     = document.getElementById('btn-verificar');
 
-    // Reset
-    cedulaFeedback.innerHTML  = '';
+    cedulaFeedback.innerHTML   = '';
     dactilarFeedback.innerHTML = '';
-    bloqueRc.style.display    = 'none';
+    bloqueRc.style.display     = 'none';
     bloqueRegistro.style.display = 'none';
-    cedulaVerificada          = false;
+    cedulaVerificada           = false;
 
     document.getElementById('id_cedula').classList.remove('is-valid', 'is-invalid');
     document.getElementById('id_dactilar').classList.remove('is-valid', 'is-invalid');
 
-    // Validaciones locales
     if (!cedula || cedula.length !== 10 || !/^\d+$/.test(cedula)) {
       cedulaFeedback.innerHTML = '<span class="text-danger">Ingrese una cédula válida de 10 dígitos.</span>';
       document.getElementById('id_cedula').classList.add('is-invalid');
@@ -192,19 +214,28 @@
           'Content-Type': 'application/json',
           'X-CSRFToken':  '{{ csrf_token }}',
         },
-        body: JSON.stringify({
-          cedula:          cedula,
-          codigo_dactilar: codigoDactilar,
-        }),
+        body: JSON.stringify({ cedula, codigo_dactilar: codigoDactilar }),
       });
       const data = await resp.json();
 
       if (data.ok) {
+        const generoTexto = data.datos.genero_texto;
+        const estadoCivil = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
+
+        // Rellenar spans visibles
         document.getElementById('rc-nombres').textContent      = data.datos.nombres;
         document.getElementById('rc-apellidos').textContent    = data.datos.apellidos;
-        document.getElementById('rc-genero').textContent       = data.datos.genero_texto;
+        document.getElementById('rc-genero').textContent       = generoTexto;
         document.getElementById('rc-fecha').textContent        = data.datos.fecha_nacimiento;
-        document.getElementById('rc-estado-civil').textContent = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
+        document.getElementById('rc-estado-civil').textContent = estadoCivil;
+
+        // Guardar en hidden para sobrevivir el POST
+        document.getElementById('hidden-rc-nombres').value      = data.datos.nombres;
+        document.getElementById('hidden-rc-apellidos').value    = data.datos.apellidos;
+        document.getElementById('hidden-rc-genero').value       = generoTexto;
+        document.getElementById('hidden-rc-fecha').value        = data.datos.fecha_nacimiento;
+        document.getElementById('hidden-rc-estado-civil').value = estadoCivil;
+        document.getElementById('hidden-rc-dactilar').value     = codigoDactilar;
 
         bloqueRc.style.display       = 'block';
         bloqueRegistro.style.display = 'block';
@@ -234,7 +265,6 @@
     }
   }
 
-  // Bloquear submit si no verificó
   document.getElementById('form-registro').addEventListener('submit', function (e) {
     if (!cedulaVerificada) {
       e.preventDefault();
@@ -245,13 +275,67 @@
     }
   });
 
-  // También verificar con Enter en el campo dactilar
   document.getElementById('id_dactilar').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      verificarCedula();
+    if (e.key === 'Enter') { e.preventDefault(); verificarCedula(); }
+  });
+
+  // ── Restaurar estado tras POST con errores ────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function () {
+    const erroresServidor = {
+      'Cédula':               `{{ form.cedula.errors|join:", " }}`,
+      'Correo':               `{{ form.email.errors|join:", " }}`,
+      'Contraseña':           `{{ form.password1.errors|join:", " }}`,
+      'Confirmar contraseña': `{{ form.password2.errors|join:", " }}`,
+      'General':              `{{ form.non_field_errors|join:", " }}`,
+    };
+
+    const listaErrores = Object.entries(erroresServidor)
+      .filter(([_, v]) => v && v.trim())
+      .map(([k, v]) => `<li><strong>${k}:</strong> ${v}</li>`)
+      .join('');
+
+    if (listaErrores) {
+      // Restaurar datos RC desde hidden (populados por Django con request.POST)
+      const rcNombres     = document.getElementById('hidden-rc-nombres').value;
+      const rcApellidos   = document.getElementById('hidden-rc-apellidos').value;
+      const rcGenero      = document.getElementById('hidden-rc-genero').value;
+      const rcFecha       = document.getElementById('hidden-rc-fecha').value;
+      const rcEstadoCivil = document.getElementById('hidden-rc-estado-civil').value;
+      const rcDactilar    = document.getElementById('hidden-rc-dactilar').value;
+
+      if (rcNombres) {
+        document.getElementById('rc-nombres').textContent      = rcNombres;
+        document.getElementById('rc-apellidos').textContent    = rcApellidos;
+        document.getElementById('rc-genero').textContent       = rcGenero;
+        document.getElementById('rc-fecha').textContent        = rcFecha;
+        document.getElementById('rc-estado-civil').textContent = rcEstadoCivil;
+      }
+
+      // Restaurar código dactilar en el input
+      if (rcDactilar) {
+        document.getElementById('id_dactilar').value = rcDactilar;
+      }
+
+      // Mostrar bloques
+      document.getElementById('bloque-rc').style.display       = 'block';
+      document.getElementById('bloque-registro').style.display = 'block';
+      cedulaVerificada = true;
+
+      // Restaurar botón verificado
+      const btnV = document.getElementById('btn-verificar');
+      btnV.textContent = '✓ Identidad verificada';
+      btnV.classList.replace('btn-outline-primary', 'btn-success');
+      btnV.disabled = true;
+
+      document.getElementById('id_cedula').classList.add('is-valid');
+      document.getElementById('id_dactilar').classList.add('is-valid');
+
+      // Mostrar popup con errores
+      document.getElementById('modal-errores-body').innerHTML = `<ul class="mb-0">${listaErrores}</ul>`;
+      new bootstrap.Modal(document.getElementById('modalErrores')).show();
     }
   });
 </script>
+
 </body>
 </html>

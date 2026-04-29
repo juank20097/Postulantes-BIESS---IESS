@@ -36,13 +36,17 @@ def registro(request):
                     postulante.nacionalidad     = datos['nacionalidad']
                     postulante.save()
 
-            login(request, user)
-            messages.success(request, 'Cuenta creada correctamente. Bienvenido/a.')
-            return redirect('paso_info_personal')
+            from .email_service import crear_otp, enviar_otp_correo
+            codigo = crear_otp(user)
+            enviar_otp_correo(user.email, codigo)
+            # Guardamos el id del usuario en sesión para la pantalla OTP
+            request.session['otp_user_id'] = user.pk
+            messages.success(request, 'Cuenta creada. Ingresa el código que enviamos a tu correo.')
+            return redirect('verificar_otp')
 
         return render(request, 'usuarios/registro.html', {'form': form})
 
-    return render(request, 'usuarios/registro.html', {})
+    return render(request, 'usuarios/registro.html', {'form': RegistroForm()})
 
 
 def consultar_cedula_ajax(request):
@@ -122,3 +126,46 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'Ha cerrado sesión correctamente.')
     return redirect('login')
+
+def verificar_otp(request):
+    user_id = request.session.get('otp_user_id')
+    if not user_id:
+        return redirect('login')
+
+    from usuarios.models import PostulanteUser, OTPRegistro
+    from .email_service import crear_otp, enviar_otp_correo
+
+    try:
+        user = PostulanteUser.objects.get(pk=user_id)
+    except PostulanteUser.DoesNotExist:
+        return redirect('login')
+
+    error = None
+
+    if request.method == 'POST':
+        if 'reenviar' in request.POST:
+            codigo = crear_otp(user)
+            enviar_otp_correo(user.email, codigo)
+            messages.info(request, 'Se reenvió un nuevo código a tu correo.')
+            return redirect('verificar_otp')
+
+        codigo_ingresado = request.POST.get('codigo', '').strip()
+        try:
+            otp = OTPRegistro.objects.get(usuario=user)
+            if not otp.esta_vigente():
+                error = 'El código ha expirado. Solicita uno nuevo.'
+            elif otp.codigo != codigo_ingresado:
+                error = 'Código incorrecto.'
+            else:
+                otp.verificado = True
+                otp.save()
+                del request.session['otp_user_id']
+                login(request, user)
+                return redirect('paso_info_personal')
+        except OTPRegistro.DoesNotExist:
+            error = 'No existe un código activo. Solicita uno nuevo.'
+
+    return render(request, 'usuarios/verificar_otp.html', {
+        'email': user.email,
+        'error': error,
+    })
