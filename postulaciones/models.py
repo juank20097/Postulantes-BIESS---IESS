@@ -12,9 +12,8 @@ def validar_pdf(archivo):
 
 def _carpeta_usuario(postulante):
     """
-    Devuelve el prefijo de carpeta del usuario dentro del bucket:
+    Devuelve la carpeta raíz del usuario dentro del bucket:
     BIESS-XXXXXXXX_1234567890
-    Si aún no tiene codigo_unico (primera vez) usa solo la cédula.
     """
     cedula = postulante.usuario.cedula if postulante.usuario_id else 'sin_cedula'
     codigo = postulante.codigo_unico or 'NUEVO'
@@ -22,47 +21,47 @@ def _carpeta_usuario(postulante):
 
 
 def upload_organizacion(instance, filename):
-    """organizaciones/BIESS-XXXX_cedula/organizacion_cedula.pdf"""
-    cedula = instance.usuario.cedula
+    """BIESS-XXXX_cedula/organizaciones/organizacion_cedula.pdf"""
+    cedula  = instance.usuario.cedula
     carpeta = _carpeta_usuario(instance)
-    ext = filename.rsplit('.', 1)[-1].lower()
-    return f'organizaciones/{carpeta}/organizacion_{cedula}.{ext}'
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'{carpeta}/organizaciones/organizacion_{cedula}.{ext}'
 
 
 def upload_formacion(instance, filename):
-    """formacion/BIESS-XXXX_cedula/formacion_cedula_titulo.pdf"""
+    """BIESS-XXXX_cedula/formacion/formacion_cedula_titulo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
     ext     = filename.rsplit('.', 1)[-1].lower()
-    return f'formacion/{carpeta}/formacion_{cedula}_{titulo}.{ext}'
+    return f'{carpeta}/formacion/formacion_{cedula}_{titulo}.{ext}'
 
 
 def upload_experiencia(instance, filename):
-    """experiencia/BIESS-XXXX_cedula/experiencia_cedula_cargo.pdf"""
+    """BIESS-XXXX_cedula/experiencia/experiencia_cedula_cargo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     cargo   = instance.cargo[:40].replace(' ', '_').lower() if instance.cargo else 'doc'
     ext     = filename.rsplit('.', 1)[-1].lower()
-    return f'experiencia/{carpeta}/experiencia_{cedula}_{cargo}.{ext}'
+    return f'{carpeta}/experiencia/experiencia_{cedula}_{cargo}.{ext}'
 
 
 def upload_capacitacion(instance, filename):
-    """capacitacion/BIESS-XXXX_cedula/capacitacion_cedula_nombre.pdf"""
+    """BIESS-XXXX_cedula/capacitacion/capacitacion_cedula_nombre.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     nombre  = instance.nombre[:40].replace(' ', '_').lower() if instance.nombre else 'doc'
     ext     = filename.rsplit('.', 1)[-1].lower()
-    return f'capacitacion/{carpeta}/capacitacion_{cedula}_{nombre}.{ext}'
+    return f'{carpeta}/capacitacion/capacitacion_{cedula}_{nombre}.{ext}'
 
 
 def upload_publicacion(instance, filename):
-    """publicaciones/BIESS-XXXX_cedula/publicacion_cedula_titulo.pdf"""
+    """BIESS-XXXX_cedula/publicaciones/publicacion_cedula_titulo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
     ext     = filename.rsplit('.', 1)[-1].lower()
-    return f'publicaciones/{carpeta}/publicacion_{cedula}_{titulo}.{ext}'
+    return f'{carpeta}/publicaciones/publicacion_{cedula}_{titulo}.{ext}'
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +74,6 @@ class Postulante(models.Model):
     separada en secciones según el RF.
     """
 
-    # ── Choices ───────────────────────────────────────────────────────────────
     SECTOR_CHOICES = [
         ('AFILIADO',  'Miembro Principal y Alterno — Sector Afiliados'),
         ('JUBILADO',  'Miembro Principal y Alterno — Sector Jubilados'),
@@ -103,7 +101,6 @@ class Postulante(models.Model):
         ('F', 'Femenino'),
     ]
 
-    # ── Relación con usuario ──────────────────────────────────────────────────
     usuario      = models.OneToOneField(
         'usuarios.PostulanteUser',
         on_delete=models.CASCADE,
@@ -113,7 +110,6 @@ class Postulante(models.Model):
     sector       = models.CharField(max_length=15, choices=SECTOR_CHOICES, blank=True)
     estado       = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
 
-    # ── Sección 1.1: Información personal ────────────────────────────────────
     nombres          = models.CharField(max_length=100, blank=True)
     apellidos        = models.CharField(max_length=100, blank=True)
     cedula           = models.CharField(max_length=10, blank=True)
@@ -124,7 +120,6 @@ class Postulante(models.Model):
     conyuge_nombres  = models.CharField(max_length=100, blank=True)
     conyuge_cedula   = models.CharField(max_length=10, blank=True)
 
-    # ── Sección 1.2: Información domiciliaria y de contacto ───────────────────
     pais               = models.CharField(max_length=80, blank=True)
     provincia          = models.CharField(max_length=80, blank=True)
     ciudad             = models.CharField(max_length=80, blank=True)
@@ -137,7 +132,6 @@ class Postulante(models.Model):
     telefono_domicilio = models.CharField(max_length=15, blank=True)
     email_secundario   = models.EmailField(blank=True)
 
-    # ── Sección 1.4: Sector de postulación y organización de respaldo ─────────
     tiene_organizacion  = models.BooleanField(null=True, blank=True)
     nombre_organizacion = models.CharField(max_length=200, blank=True)
     doc_organizacion    = models.FileField(
@@ -146,7 +140,6 @@ class Postulante(models.Model):
         validators=[validar_pdf]
     )
 
-    # ── Timestamps ────────────────────────────────────────────────────────────
     creado_en  = models.DateTimeField(auto_now_add=True)
     modificado = models.DateTimeField(auto_now=True)
 

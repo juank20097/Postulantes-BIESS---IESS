@@ -1,0 +1,71 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# ── Entornos virtuales ────────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env.bak
+
+# ── Variables de entorno (NUNCA al repo) ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Django ────────────────────────────────────────────────────────────────────
+*.log
+staticfiles/
+media/
+db.sqlite3
+db.sqlite3-journal
+
+# ── Migraciones generadas (conservar solo las iniciales si se desea) ──────────
+# Descomenta si quieres ignorar migraciones generadas automáticamente:
+# */migrations/0*.py
+# !*/migrations/__init__.py
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# (docker-compose.yml y Dockerfile SÍ van al repo)
+docker-compose.override.yml
+
+# ── IDEs y editores ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing y cobertura ───────────────────────────────────────────────────────
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ── Build / distribución ──────────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+
+# ── Archivos subidos por usuarios (van a MinIO, no al repo) ───────────────────
+uploads/
+formacion/
+experiencia/
+capacitacion/
+publicaciones/
+organizaciones/
+
+# ── Certificados y claves ────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
