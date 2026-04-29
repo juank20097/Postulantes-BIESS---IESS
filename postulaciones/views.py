@@ -22,6 +22,7 @@ def get_or_create_postulante(user):
 @login_required
 def paso_info_personal(request):
     postulante = get_or_create_postulante(request.user)
+
     if request.method == 'POST':
         postulante.nombres          = request.POST.get('nombres', '')
         postulante.apellidos        = request.POST.get('apellidos', '')
@@ -34,6 +35,7 @@ def paso_info_personal(request):
         postulante.save()
         messages.success(request, 'Información personal guardada.')
         return redirect('paso_domicilio')
+
     return render(request, 'postulaciones/paso_info_personal.html', {
         'postulante': postulante, 'paso': 1, 'total_pasos': 8
     })

@@ -33,7 +33,7 @@
         {% endfor %}
       {% endif %}
 
-      <form method="post" novalidate>
+      <form method="post" novalidate id="form-registro">
         {% csrf_token %}
 
         <!-- Cédula -->
@@ -52,7 +52,28 @@
           {% endif %}
         </div>
 
-        <!-- Datos RC — se llenan automáticamente al salir del campo cédula -->
+        <!-- Código dactilar -->
+        <div class="mb-3" id="bloque-dactilar">
+          <label class="form-label fw-semibold">
+            Código dactilar <span class="text-danger">*</span>
+          </label>
+          <input type="text" id="id_dactilar"
+                 class="form-control" maxlength="20"
+                 placeholder="Ingrese su código dactilar"
+                 autocomplete="off">
+          <div class="form-text">Código de 10 dígitos que aparece en su cédula.</div>
+          <div id="dactilar-feedback" class="mt-1 small"></div>
+        </div>
+
+        <!-- Botón verificar -->
+        <div class="mb-3">
+          <button type="button" class="btn btn-outline-primary w-100"
+                  id="btn-verificar" onclick="verificarCedula()">
+            Verificar identidad
+          </button>
+        </div>
+
+        <!-- Datos RC — se llenan tras verificación -->
         <div id="bloque-rc" class="datos-rc mb-3" style="display:none;">
           <p class="fw-semibold small text-success mb-2">✓ Identidad verificada con el Registro Civil</p>
           <div class="row g-1 small">
@@ -64,56 +85,58 @@
           </div>
         </div>
 
-        <!-- Email -->
-        <div class="mb-3">
-          <label class="form-label fw-semibold">
-            Correo electrónico <span class="text-danger">*</span>
-          </label>
-          <input type="email" name="email" class="form-control"
-                 placeholder="correo@ejemplo.com"
-                 value="{{ form.email.value|default:'' }}">
-          {% if form.email.errors %}
-          <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+        <!-- Campos que el usuario llena — solo visibles tras verificación -->
+        <div id="bloque-registro" style="display:none;">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Correo electrónico <span class="text-danger">*</span>
+            </label>
+            <input type="email" name="email" class="form-control"
+                   placeholder="correo@ejemplo.com"
+                   value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}
+            <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Contraseña <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="password1" class="form-control"
+                   placeholder="Mínimo 8 caracteres">
+            {% if form.password1.errors %}
+            <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
+            {% endif %}
+            <div class="form-text">Mínimo 8 caracteres.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              Confirmar contraseña <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="password2" class="form-control"
+                   placeholder="Repita su contraseña">
+            {% if form.password2.errors %}
+            <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
+            {% endif %}
+          </div>
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
           {% endif %}
+
+          <button type="submit" class="btn btn-iess mb-3">Crear cuenta</button>
+
         </div>
-
-        <!-- Contraseña -->
-        <div class="mb-3">
-          <label class="form-label fw-semibold">
-            Contraseña <span class="text-danger">*</span>
-          </label>
-          <input type="password" name="password1" class="form-control"
-                 placeholder="Mínimo 8 caracteres">
-          {% if form.password1.errors %}
-          <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
-          {% endif %}
-          <div class="form-text">Mínimo 8 caracteres.</div>
-        </div>
-
-        <!-- Confirmar contraseña -->
-        <div class="mb-4">
-          <label class="form-label fw-semibold">
-            Confirmar contraseña <span class="text-danger">*</span>
-          </label>
-          <input type="password" name="password2" class="form-control"
-                 placeholder="Repita su contraseña">
-          {% if form.password2.errors %}
-          <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
-          {% endif %}
-        </div>
-
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <button type="submit" class="btn btn-iess mb-3">Crear cuenta</button>
 
         <p class="text-center mb-0 small">
           ¿Ya tiene cuenta?
           <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">Iniciar sesión</a>
         </p>
-      </form>
 
+      </form>
     </div>
   </div>
 </div>
@@ -126,18 +149,41 @@
     'UNION_HECHO': 'Unión de hecho',
   };
 
-  document.getElementById('id_cedula').addEventListener('blur', async function () {
-    const cedula   = this.value.trim();
-    const feedback = document.getElementById('cedula-feedback');
-    const bloqueRc = document.getElementById('bloque-rc');
+  let cedulaVerificada = false;
 
-    feedback.innerHTML = '';
-    bloqueRc.style.display = 'none';
-    this.classList.remove('is-valid', 'is-invalid');
+  async function verificarCedula() {
+    const cedula          = document.getElementById('id_cedula').value.trim();
+    const codigoDactilar  = document.getElementById('id_dactilar').value.trim();
+    const cedulaFeedback  = document.getElementById('cedula-feedback');
+    const dactilarFeedback= document.getElementById('dactilar-feedback');
+    const bloqueRc        = document.getElementById('bloque-rc');
+    const bloqueRegistro  = document.getElementById('bloque-registro');
+    const btnVerificar    = document.getElementById('btn-verificar');
 
-    if (!cedula || cedula.length !== 10 || !/^\d+$/.test(cedula)) return;
+    // Reset
+    cedulaFeedback.innerHTML  = '';
+    dactilarFeedback.innerHTML = '';
+    bloqueRc.style.display    = 'none';
+    bloqueRegistro.style.display = 'none';
+    cedulaVerificada          = false;
 
-    feedback.innerHTML = '<span class="text-muted">Consultando Registro Civil...</span>';
+    document.getElementById('id_cedula').classList.remove('is-valid', 'is-invalid');
+    document.getElementById('id_dactilar').classList.remove('is-valid', 'is-invalid');
+
+    // Validaciones locales
+    if (!cedula || cedula.length !== 10 || !/^\d+$/.test(cedula)) {
+      cedulaFeedback.innerHTML = '<span class="text-danger">Ingrese una cédula válida de 10 dígitos.</span>';
+      document.getElementById('id_cedula').classList.add('is-invalid');
+      return;
+    }
+    if (!codigoDactilar) {
+      dactilarFeedback.innerHTML = '<span class="text-danger">Ingrese el código dactilar.</span>';
+      document.getElementById('id_dactilar').classList.add('is-invalid');
+      return;
+    }
+
+    btnVerificar.disabled    = true;
+    btnVerificar.textContent = 'Verificando...';
 
     try {
       const resp = await fetch('{% url "consultar_cedula_ajax" %}', {
@@ -146,25 +192,64 @@
           'Content-Type': 'application/json',
           'X-CSRFToken':  '{{ csrf_token }}',
         },
-        body: JSON.stringify({ cedula }),
+        body: JSON.stringify({
+          cedula:          cedula,
+          codigo_dactilar: codigoDactilar,
+        }),
       });
       const data = await resp.json();
 
       if (data.ok) {
-        document.getElementById('rc-nombres').textContent    = data.datos.nombres;
-        document.getElementById('rc-apellidos').textContent  = data.datos.apellidos;
-        document.getElementById('rc-genero').textContent     = data.datos.genero_texto;
-        document.getElementById('rc-fecha').textContent      = data.datos.fecha_nacimiento;
+        document.getElementById('rc-nombres').textContent      = data.datos.nombres;
+        document.getElementById('rc-apellidos').textContent    = data.datos.apellidos;
+        document.getElementById('rc-genero').textContent       = data.datos.genero_texto;
+        document.getElementById('rc-fecha').textContent        = data.datos.fecha_nacimiento;
         document.getElementById('rc-estado-civil').textContent = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
-        bloqueRc.style.display = 'block';
-        feedback.innerHTML     = '';
-        this.classList.add('is-valid');
+
+        bloqueRc.style.display       = 'block';
+        bloqueRegistro.style.display = 'block';
+        cedulaVerificada             = true;
+
+        document.getElementById('id_cedula').classList.add('is-valid');
+        document.getElementById('id_dactilar').classList.add('is-valid');
+        btnVerificar.textContent = '✓ Identidad verificada';
+        btnVerificar.classList.replace('btn-outline-primary', 'btn-success');
+
       } else {
-        feedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
-        this.classList.add('is-invalid');
+        if (data.pedir_dactilar) {
+          dactilarFeedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
+          document.getElementById('id_dactilar').classList.add('is-invalid');
+        } else {
+          cedulaFeedback.innerHTML = `<span class="text-danger">${data.error}</span>`;
+          document.getElementById('id_cedula').classList.add('is-invalid');
+        }
+        btnVerificar.textContent = 'Verificar identidad';
+        btnVerificar.disabled    = false;
       }
+
     } catch (e) {
-      feedback.innerHTML = '<span class="text-danger">Error de conexión.</span>';
+      cedulaFeedback.innerHTML = '<span class="text-danger">Error de conexión con el servidor.</span>';
+      btnVerificar.textContent = 'Verificar identidad';
+      btnVerificar.disabled    = false;
+    }
+  }
+
+  // Bloquear submit si no verificó
+  document.getElementById('form-registro').addEventListener('submit', function (e) {
+    if (!cedulaVerificada) {
+      e.preventDefault();
+      document.getElementById('cedula-feedback').innerHTML =
+        '<span class="text-danger">Debe verificar su identidad antes de continuar.</span>';
+      document.getElementById('id_cedula').classList.add('is-invalid');
+      document.getElementById('id_cedula').focus();
+    }
+  });
+
+  // También verificar con Enter en el campo dactilar
+  document.getElementById('id_dactilar').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      verificarCedula();
     }
   });
 </script>

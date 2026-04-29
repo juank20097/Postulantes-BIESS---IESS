@@ -8,6 +8,66 @@ def validar_pdf(archivo):
         raise ValidationError('Solo se permiten archivos PDF.')
 
 
+# ── Helpers de upload_to ──────────────────────────────────────────────────────
+
+def _carpeta_usuario(postulante):
+    """
+    Devuelve el prefijo de carpeta del usuario dentro del bucket:
+    BIESS-XXXXXXXX_1234567890
+    Si aún no tiene codigo_unico (primera vez) usa solo la cédula.
+    """
+    cedula = postulante.usuario.cedula if postulante.usuario_id else 'sin_cedula'
+    codigo = postulante.codigo_unico or 'NUEVO'
+    return f'{codigo}_{cedula}'
+
+
+def upload_organizacion(instance, filename):
+    """organizaciones/BIESS-XXXX_cedula/organizacion_cedula.pdf"""
+    cedula = instance.usuario.cedula
+    carpeta = _carpeta_usuario(instance)
+    ext = filename.rsplit('.', 1)[-1].lower()
+    return f'organizaciones/{carpeta}/organizacion_{cedula}.{ext}'
+
+
+def upload_formacion(instance, filename):
+    """formacion/BIESS-XXXX_cedula/formacion_cedula_titulo.pdf"""
+    cedula  = instance.postulante.usuario.cedula
+    carpeta = _carpeta_usuario(instance.postulante)
+    titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'formacion/{carpeta}/formacion_{cedula}_{titulo}.{ext}'
+
+
+def upload_experiencia(instance, filename):
+    """experiencia/BIESS-XXXX_cedula/experiencia_cedula_cargo.pdf"""
+    cedula  = instance.postulante.usuario.cedula
+    carpeta = _carpeta_usuario(instance.postulante)
+    cargo   = instance.cargo[:40].replace(' ', '_').lower() if instance.cargo else 'doc'
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'experiencia/{carpeta}/experiencia_{cedula}_{cargo}.{ext}'
+
+
+def upload_capacitacion(instance, filename):
+    """capacitacion/BIESS-XXXX_cedula/capacitacion_cedula_nombre.pdf"""
+    cedula  = instance.postulante.usuario.cedula
+    carpeta = _carpeta_usuario(instance.postulante)
+    nombre  = instance.nombre[:40].replace(' ', '_').lower() if instance.nombre else 'doc'
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'capacitacion/{carpeta}/capacitacion_{cedula}_{nombre}.{ext}'
+
+
+def upload_publicacion(instance, filename):
+    """publicaciones/BIESS-XXXX_cedula/publicacion_cedula_titulo.pdf"""
+    cedula  = instance.postulante.usuario.cedula
+    carpeta = _carpeta_usuario(instance.postulante)
+    titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'publicaciones/{carpeta}/publicacion_{cedula}_{titulo}.{ext}'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 class Postulante(models.Model):
     """
     Modelo central del formulario BIESS.
@@ -54,16 +114,13 @@ class Postulante(models.Model):
     estado       = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
 
     # ── Sección 1.1: Información personal ────────────────────────────────────
-    # Campos readonly: vienen de DIGERCIC vía interoperabilidad
     nombres          = models.CharField(max_length=100, blank=True)
     apellidos        = models.CharField(max_length=100, blank=True)
     cedula           = models.CharField(max_length=10, blank=True)
     genero           = models.CharField(max_length=1, choices=GENERO_CHOICES, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
-    # EF-12 1.1.6: si nacionalidad != ecuatoriana el sistema cierra la postulación
     nacionalidad     = models.CharField(max_length=60, blank=True)
     estado_civil     = models.CharField(max_length=15, choices=ESTADO_CIVIL_CHOICES, blank=True)
-    # EF-12 1.1.7.1: condicional si casado/unión de hecho
     conyuge_nombres  = models.CharField(max_length=100, blank=True)
     conyuge_cedula   = models.CharField(max_length=10, blank=True)
 
@@ -78,21 +135,16 @@ class Postulante(models.Model):
     referencia         = models.CharField(max_length=250, blank=True)
     telefono_celular   = models.CharField(max_length=15, blank=True)
     telefono_domicilio = models.CharField(max_length=15, blank=True)
-    # email_1 viene del usuario (PostulanteUser.email)
     email_secundario   = models.EmailField(blank=True)
 
-    # ── Sección 1.3: Información adicional — familiar en IESS/BIESS ──────────
-    # Ver modelo FamiliarIESS (FK → Postulante)
-
     # ── Sección 1.4: Sector de postulación y organización de respaldo ─────────
-    # EF-12 1.4.1.3 / 1.4.2.3 / 1.4.3.3
     tiene_organizacion  = models.BooleanField(null=True, blank=True)
     nombre_organizacion = models.CharField(max_length=200, blank=True)
     doc_organizacion    = models.FileField(
-        upload_to='organizaciones/',
+        upload_to=upload_organizacion,
         null=True, blank=True,
         validators=[validar_pdf]
-    )  # EF-12: máx. 4 MB
+    )
 
     # ── Timestamps ────────────────────────────────────────────────────────────
     creado_en  = models.DateTimeField(auto_now_add=True)
@@ -103,7 +155,6 @@ class Postulante(models.Model):
         verbose_name_plural = 'Postulantes'
 
     def save(self, *args, **kwargs):
-        # EF-12: el formulario contará con un código de numeración único
         if not self.codigo_unico:
             self.codigo_unico = f'BIESS-{str(uuid.uuid4())[:8].upper()}'
         super().save(*args, **kwargs)
@@ -116,7 +167,6 @@ class FamiliarIESS(models.Model):
     """
     EF-12 sección 1.3: familiares dentro del segundo grado
     de consanguinidad y cuarto de afinidad trabajando en IESS/BIESS.
-    Permite múltiples registros por postulante (botón Agregar).
     """
     PARENTESCO_CHOICES = [
         ('CONYUGE',       'Cónyuge'),
@@ -160,8 +210,6 @@ class FamiliarIESS(models.Model):
 class FormacionAcademica(models.Model):
     """
     EF-12 sección 1.5: formación académica del postulante.
-    Solo niveles tercer nivel en adelante (requisito del concurso).
-    Documento PDF máx. 2 MB.
     """
     NIVEL_CHOICES = [
         ('TERCER',   'Tercer nivel de grado'),
@@ -193,9 +241,9 @@ class FormacionAcademica(models.Model):
     num_senescyt   = models.CharField(max_length=50)
     fecha_senescyt = models.DateField()
     documento      = models.FileField(
-        upload_to='formacion/',
+        upload_to=upload_formacion,
         validators=[validar_pdf]
-    )  # máx. 2 MB — validar en form
+    )
 
     class Meta:
         verbose_name        = 'Formación académica'
@@ -209,9 +257,6 @@ class FormacionAcademica(models.Model):
 class ExperienciaProfesional(models.Model):
     """
     EF-12 sección 1.6: experiencia profesional.
-    El sistema calcula automáticamente años/meses/días
-    a partir de las fechas ingresadas.
-    Documento PDF máx. 2 MB por experiencia.
     """
     TIPO_CHOICES = [
         ('GENERAL',   'General'),
@@ -228,12 +273,11 @@ class ExperienciaProfesional(models.Model):
     fecha_inicio     = models.DateField()
     fecha_fin        = models.DateField()
     actividades_area = models.CharField(max_length=15, choices=AREA_CHOICES)
-    # EF-12 1.6.7: máximo 1000 caracteres
     descripcion      = models.TextField(max_length=1000)
     documento        = models.FileField(
-        upload_to='experiencia/',
+        upload_to=upload_experiencia,
         validators=[validar_pdf]
-    )  # máx. 2 MB
+    )
 
     class Meta:
         verbose_name        = 'Experiencia profesional'
@@ -242,10 +286,6 @@ class ExperienciaProfesional(models.Model):
 
     @property
     def tiempo_calculado(self):
-        """
-        EF-12 1.6: el sistema calcula automáticamente la experiencia
-        visualizando el tiempo en años, meses y días.
-        """
         from dateutil.relativedelta import relativedelta
         delta = relativedelta(self.fecha_fin, self.fecha_inicio)
         return {
@@ -269,7 +309,6 @@ class ExperienciaProfesional(models.Model):
 class Capacitacion(models.Model):
     """
     EF-12 sección 1.8: cursos, seminarios y talleres.
-    Documento PDF máx. 2 MB por evento.
     """
     TIPO_CHOICES = [
         ('CURSO',     'Curso'),
@@ -287,9 +326,9 @@ class Capacitacion(models.Model):
     fecha_fin    = models.DateField()
     horas        = models.PositiveIntegerField()
     documento    = models.FileField(
-        upload_to='capacitacion/',
+        upload_to=upload_capacitacion,
         validators=[validar_pdf]
-    )  # máx. 2 MB
+    )
 
     class Meta:
         verbose_name        = 'Capacitación'
@@ -303,8 +342,6 @@ class Capacitacion(models.Model):
 class Publicacion(models.Model):
     """
     EF-12 sección 1.7: publicaciones e investigaciones académicas.
-    Condicional: solo si el postulante indica que cuenta con ellas.
-    Documento PDF máx. 2 MB por publicación.
     """
     TIPO_CHOICES = [
         ('PUBLICACION',   'Publicación'),
@@ -318,12 +355,11 @@ class Publicacion(models.Model):
     tipo        = models.CharField(max_length=15, choices=TIPO_CHOICES)
     medio       = models.CharField(max_length=150)
     fecha       = models.DateField()
-    # EF-12 1.7.1.5: ¿guarda relación con el campo de ejercicio o formación?
     relacionado = models.BooleanField(default=False)
     documento   = models.FileField(
-        upload_to='publicaciones/',
+        upload_to=upload_publicacion,
         validators=[validar_pdf]
-    )  # máx. 2 MB
+    )
 
     class Meta:
         verbose_name        = 'Publicación'
@@ -337,43 +373,27 @@ class Publicacion(models.Model):
 class Inhabilidades(models.Model):
     """
     EF-12 sección 1.9: las 13 preguntas de inhabilidades.
-    Todas obligatorias. OneToOne con Postulante.
-    p7 tiene campos adicionales condicionales si la respuesta es True.
     """
     postulante = models.OneToOneField(
         Postulante, on_delete=models.CASCADE, related_name='inhabilidades'
     )
 
-    # 1.9.1 — ¿Es ecuatoriano/a y está en pleno goce de derechos?
     p1_goce_derechos         = models.BooleanField(null=True)
-    # 1.9.2 — ¿Se encuentra inhabilitado para ejercer el comercio?
     p2_inhabilitado_comercio = models.BooleanField(null=True)
-    # 1.9.3 — ¿Está en mora con el Estado o SuperBancos?
     p3_mora_obligaciones     = models.BooleanField(null=True)
-    # 1.9.4 — ¿Mantiene vínculo con instituciones del sistema financiero?
     p4_vinculo_financiero    = models.BooleanField(null=True)
-    # 1.9.5 — ¿Es funcionario o empleado del IESS/BIESS?
     p5_funcionario_iess      = models.BooleanField(null=True)
-    # 1.9.6 — ¿Mantiene interés en compañías aseguradoras del sistema?
     p6_interes_aseguradoras  = models.BooleanField(null=True)
-    # 1.9.7 — ¿En los últimos 5 años fue removido por un Organismo de Control?
     p7_removido_organismo    = models.BooleanField(null=True)
-    # Condicionales EF-12 1.7.1.7.1.x — solo si p7 = True
     p7_institucion           = models.CharField(max_length=100, blank=True)
     p7_cargo                 = models.CharField(max_length=100, blank=True)
     p7_fecha_fin             = models.DateField(null=True, blank=True)
     p7_motivo                = models.CharField(max_length=300, blank=True)
-    # 1.9.8 — ¿Mantiene obligaciones pendientes con el SRI?
     p8_sri                   = models.BooleanField(null=True)
-    # 1.9.9 — ¿Ha incurrido en castigo de obligaciones por institución financiera?
     p9_castigo_financiero    = models.BooleanField(null=True)
-    # 1.9.10 — ¿Actualmente litiga en contra del IESS/BIESS?
     p10_litigio_iess         = models.BooleanField(null=True)
-    # 1.9.11 — ¿Procesado por delito de corrupción o crimen organizado?
     p11_procesado_corrupcion = models.BooleanField(null=True)
-    # 1.9.12 — ¿Mantiene responsabilidades en firme por la Contraloría?
     p12_contraloria          = models.BooleanField(null=True)
-    # 1.9.13 — ¿Registrado en la base de datos de la UAFE?
     p13_uafe                 = models.BooleanField(null=True)
 
     class Meta:

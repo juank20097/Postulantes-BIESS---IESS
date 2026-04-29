@@ -48,19 +48,29 @@ def registro(request):
 def consultar_cedula_ajax(request):
     if request.method == 'POST':
         try:
-            body   = json.loads(request.body)
-            cedula = body.get('cedula', '').strip()
+            body          = json.loads(request.body)
+            cedula        = body.get('cedula', '').strip()
+            codigo_dactilar = body.get('codigo_dactilar', '').strip()
         except Exception:
             return JsonResponse({'ok': False, 'error': 'Petición inválida.'})
 
         if not cedula or len(cedula) != 10 or not cedula.isdigit():
             return JsonResponse({'ok': False, 'error': 'Cédula inválida.'})
 
+        # Verificar código dactilar
+        from django.conf import settings
+        if not codigo_dactilar:
+            return JsonResponse({'ok': False, 'error': 'Ingrese el código dactilar.', 'pedir_dactilar': True})
+
+        if codigo_dactilar.upper() != settings.CODIGO_DACTILAR.upper():
+            return JsonResponse({'ok': False, 'error': 'Código dactilar incorrecto.', 'pedir_dactilar': True})
+
         # Verificar si ya existe cuenta
         from usuarios.models import PostulanteUser
         if PostulanteUser.objects.filter(cedula=cedula).exists():
             return JsonResponse({'ok': False, 'error': 'Ya existe una cuenta registrada con esta cédula.'})
 
+        # Consultar WS
         cuerpo = consultar_registro_civil(cedula)
         if not cuerpo:
             return JsonResponse({'ok': False, 'error': 'No se encontró información para esta cédula en el Registro Civil.'})
