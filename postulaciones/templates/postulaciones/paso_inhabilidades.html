@@ -2,12 +2,12 @@
 <div class="card card-formulario p-4">
   <h5 class="fw-semibold mb-1">Inhabilidades</h5>
   <p class="text-muted small mb-4">
-    Todas las preguntas son obligatorias. Responda con sinceridad bajo
-    juramento.
+    Todas las preguntas son obligatorias. Responda con sinceridad bajo juramento.
   </p>
 
   <form method="post" novalidate id="form-inhabilidades">
-    {% csrf_token %} {% for pregunta, etiqueta in preguntas %}
+    {% csrf_token %}
+    {% for pregunta, etiqueta in preguntas %}
     <div class="border rounded p-3 mb-3" id="bloque-{{ pregunta }}">
       <p class="fw-semibold small mb-2">
         {{ forloop.counter }}. {{ etiqueta }}
@@ -15,123 +15,80 @@
       </p>
       <div class="d-flex gap-4">
         <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="{{ pregunta }}"
-            id="{{ pregunta }}_si"
-            value="True"
-            {%
-            if
-            inhabilidad
-            %}{%
-            if
-            inhabilidad|dictsort:pregunta
-            %}{%
-            endif
-            %}{%
-            endif
-            %}
-            onchange="onCambioRespuesta('{{ pregunta }}', this.value)"
-          />
+          <input class="form-check-input" type="radio"
+                 name="{{ pregunta }}" id="{{ pregunta }}_si" value="True"
+                 onchange="onCambioRespuesta('{{ pregunta }}', this.value)">
           <label class="form-check-label" for="{{ pregunta }}_si">Sí</label>
         </div>
         <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="{{ pregunta }}"
-            id="{{ pregunta }}_no"
-            value="False"
-            onchange="onCambioRespuesta('{{ pregunta }}', this.value)"
-          />
+          <input class="form-check-input" type="radio"
+                 name="{{ pregunta }}" id="{{ pregunta }}_no" value="False"
+                 onchange="onCambioRespuesta('{{ pregunta }}', this.value)">
           <label class="form-check-label" for="{{ pregunta }}_no">No</label>
         </div>
       </div>
     </div>
 
     {% if pregunta == 'p7_removido_organismo' %}
-    <!-- Bloque condicional p7 -->
-    <div
-      id="bloque-p7-detalle"
-      class="border rounded p-3 mb-3 bg-light"
-      style="display: none"
-    >
-      <p class="fw-semibold small mb-3">
-        Detalle de remoción por Organismo de Control
-      </p>
+    <div id="bloque-p7-detalle" class="border rounded p-3 mb-3 bg-light" style="display:none;">
+      <p class="fw-semibold small mb-3">Detalle de remoción por Organismo de Control</p>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label"
-            >Institución <span class="text-danger">*</span></label
-          >
-          <input
-            type="text"
-            name="p7_institucion"
-            class="form-control"
-            value="{% if inhabilidad %}{{ inhabilidad.p7_institucion }}{% endif %}"
-          />
+          <label class="form-label">Institución <span class="text-danger">*</span></label>
+          <input type="text" name="p7_institucion" class="form-control"
+                 value="{% if inhabilidad %}{{ inhabilidad.p7_institucion }}{% endif %}">
         </div>
         <div class="col-md-6">
-          <label class="form-label"
-            >Cargo <span class="text-danger">*</span></label
-          >
-          <input
-            type="text"
-            name="p7_cargo"
-            class="form-co
-            value="{% if inhabilidad %}{{ inhabilidad.p7_cargo }}{% endif %}"
-          />
+          <label class="form-label">Cargo <span class="text-danger">*</span></label>
+          <input type="text" name="p7_cargo" class="form-control"
+                 value="{% if inhabilidad %}{{ inhabilidad.p7_cargo }}{% endif %}">
         </div>
         <div class="col-md-6">
-          <label class="form-label"
-            >Fecha finalización <span class="text-danger">*</span></label
-          >
-          <input
-            type="date"
-            name="p7_fecha_fin"
-            class="form-control"
-            value="{% if inhabilidad %}{{ inhabilidad.p7_fecha_fin|date:'Y-m-d' }}{% endif %}"
-          />
+          <label class="form-label">Fecha finalización <span class="text-danger">*</span></label>
+          <input type="date" name="p7_fecha_fin" class="form-control"
+                 value="{% if inhabilidad %}{{ inhabilidad.p7_fecha_fin|date:'Y-m-d' }}{% endif %}">
         </div>
         <div class="col-md-6">
-          <label class="form-label"
-            >Motivo <span class="text-danger">*</span></label
-          >
-          <input
-            type="text"
-            name="p7_motivo"
-            class="form-control"
-            value="{% if inhabilidad %}{{ inhabilidad.p7_motivo }}{% endif %}"
-          />
+          <label class="form-label">Motivo <span class="text-danger">*</span></label>
+          <input type="text" name="p7_motivo" class="form-control"
+                 value="{% if inhabilidad %}{{ inhabilidad.p7_motivo }}{% endif %}">
         </div>
       </div>
     </div>
-    {% endif %} {% endfor %}
+    {% endif %}
+    {% endfor %}
 
-    <!-- Mensaje de error general -->
-    <div
-      id="error-msg"
-      class="alert alert-danger py-2 mb-3"
-      style="display: none"
-    ></div>
+    <div id="error-msg" class="alert alert-danger py-2 mb-3" style="display:none;"></div>
 
     <div class="d-flex justify-content-between mt-4">
-      <a
-        href="{% url 'paso_capacitacion' %}"
-        class="btn btn-outline-secondary px-4"
-        >← Anterior</a
-      >
-      <button
-        type="button"
-        class="btn btn-iess px-4"
-        onclick="validarYEnviar()"
-      >
+      <a href="{% url 'paso_capacitacion' %}" class="btn btn-outline-secondary px-4">← Anterior</a>
+      <button type="button" class="btn btn-iess px-4" onclick="validarYEnviar()">
         Guardar y ver resumen →
       </button>
     </div>
   </form>
 </div>
+
+<!-- Modal de bloqueo por inhabilidad -->
+<div class="modal fade" id="modalInhabilitado" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title mb-0">🚫 Postulación No Habilitada</h6>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div class="mb-3" style="font-size:3rem;">⛔</div>
+        <p class="fw-semibold mb-2">{{ mensaje_bloqueo }}</p>
+        <p class="text-muted small">Su postulación ha sido marcada como <strong>Inhabilitada</strong> en el sistema.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <a href="{% url 'logout' %}" class="btn btn-danger px-4">Cerrar sesión</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -139,6 +96,7 @@
     {% for pregunta, etiqueta in preguntas %}'{{ pregunta }}'{% if not forloop.last %},{% endif %}{% endfor %}
   ];
 
+  // Restaurar radios con valores actuales
   window.addEventListener('DOMContentLoaded', () => {
     const valores = JSON.parse('{{ valores_actuales_json|escapejs }}');
     Object.entries(valores).forEach(([campo, valor]) => {
@@ -148,10 +106,17 @@
       }
     });
 
+    // Mostrar p7 si ya estaba en Sí
     const p7Si = document.querySelector('input[name="p7_removido_organismo"][value="True"]');
     if (p7Si && p7Si.checked) {
       document.getElementById('bloque-p7-detalle').style.display = 'block';
     }
+
+    // Si el servidor devolvió bloqueado=True → mostrar modal automáticamente
+    {% if bloqueado %}
+    const modal = new bootstrap.Modal(document.getElementById('modalInhabilitado'));
+    modal.show();
+    {% endif %}
   });
 
   function onCambioRespuesta(pregunta, valor) {
@@ -205,4 +170,4 @@
     document.getElementById('form-inhabilidades').submit();
   }
 </script>
-{% endblock %} {% endblock %}
+{% endblock %}

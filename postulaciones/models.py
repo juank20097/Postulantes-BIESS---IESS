@@ -8,6 +8,13 @@ def validar_pdf(archivo):
         raise ValidationError('Solo se permiten archivos PDF.')
 
 
+def validar_pdf_2mb(archivo):
+    if not archivo.name.lower().endswith('.pdf'):
+        raise ValidationError('Solo se permiten archivos PDF.')
+    if archivo.size > 2 * 1024 * 1024:
+        raise ValidationError('El archivo no puede superar los 2 MB.')
+
+
 # ── Helpers de upload_to ──────────────────────────────────────────────────────
 
 def _carpeta_usuario(postulante):
@@ -55,6 +62,22 @@ def upload_publicacion(instance, filename):
     return f'{carpeta}/publicaciones/publicacion_{cedula}_{titulo}.{ext}'
 
 
+def upload_declaracion_juramentada(instance, filename):
+    """BIESS-XXXX_cedula/declaracion_juramentada/declaracion_juramentada_cedula.pdf"""
+    cedula  = instance.usuario.cedula
+    carpeta = _carpeta_usuario(instance)
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'{carpeta}/declaracion_juramentada/declaracion_juramentada_{cedula}.{ext}'
+
+
+def upload_constancia(instance, filename):
+    """BIESS-XXXX_cedula/declaracion_juramentada/constancia_cedula.pdf"""
+    cedula  = instance.usuario.cedula
+    carpeta = _carpeta_usuario(instance)
+    ext     = filename.rsplit('.', 1)[-1].lower()
+    return f'{carpeta}/declaracion_juramentada/constancia_{cedula}.{ext}'
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -92,11 +115,10 @@ class Postulante(models.Model):
         on_delete=models.CASCADE,
         related_name='postulante'
     )
-    codigo_unico          = models.CharField(max_length=20, unique=True, blank=True)
-    sector                = models.CharField(max_length=15, choices=SECTOR_CHOICES, blank=True)
-    # Sectores detectados en el registro — lista separada por comas: "AFILIADO,EMPLEADOR"
-    sectores_disponibles  = models.CharField(max_length=50, blank=True)
-    estado                = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
+    codigo_unico         = models.CharField(max_length=20, unique=True, blank=True)
+    sector               = models.CharField(max_length=15, choices=SECTOR_CHOICES, blank=True)
+    sectores_disponibles = models.CharField(max_length=50, blank=True)
+    estado               = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
 
     nombres          = models.CharField(max_length=100, blank=True)
     apellidos        = models.CharField(max_length=100, blank=True)
@@ -128,6 +150,18 @@ class Postulante(models.Model):
         validators=[validar_pdf]
     )
 
+    # ── Documentos de envío definitivo ────────────────────────────────────────
+    declaracion_juramentada = models.FileField(
+        upload_to=upload_declaracion_juramentada,
+        null=True, blank=True,
+        validators=[validar_pdf_2mb]
+    )
+    constancia = models.FileField(
+        upload_to=upload_constancia,
+        null=True, blank=True,
+        validators=[validar_pdf_2mb]
+    )
+
     creado_en  = models.DateTimeField(auto_now_add=True)
     modificado = models.DateTimeField(auto_now=True)
 
@@ -141,7 +175,6 @@ class Postulante(models.Model):
         super().save(*args, **kwargs)
 
     def get_sectores_lista(self):
-        """Retorna los sectores disponibles como lista Python."""
         if self.sectores_disponibles:
             return [s.strip() for s in self.sectores_disponibles.split(',') if s.strip()]
         return [self.sector] if self.sector else []

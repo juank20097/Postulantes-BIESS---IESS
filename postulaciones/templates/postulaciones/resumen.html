@@ -7,51 +7,25 @@
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Información Personal</h6>
     <div class="row g-2 small">
-      <div class="col-md-6">
-        <span class="text-muted">Nombres:</span> {{ postulante.nombres }} {{ postulante.apellidos }}
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted">Cédula:</span> {{ postulante.usuario.cedula }}
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted">Estado civil:</span> {{ postulante.get_estado_civil_display }}
-      </div>
-      <div class="col-md-4">
-        <span class="text-muted">Género:</span> {{ postulante.get_genero_display }}
-      </div>
-      <div class="col-md-4">
-        <span class="text-muted">Nacimiento:</span> {{ postulante.fecha_nacimiento|date:"d/m/Y" }}
-      </div>
-      <div class="col-md-4">
-        <span class="text-muted">Nacionalidad:</span> {{ postulante.nacionalidad }}
-      </div>
-      <div class="col-12">
-        <span class="text-muted">Sector:</span> {{ postulante.get_sector_display }}
-      </div>
+      <div class="col-md-6"><span class="text-muted">Nombres:</span> {{ postulante.nombres }} {{ postulante.apellidos }}</div>
+      <div class="col-md-3"><span class="text-muted">Cédula:</span> {{ postulante.usuario.cedula }}</div>
+      <div class="col-md-3"><span class="text-muted">Estado civil:</span> {{ postulante.get_estado_civil_display }}</div>
+      <div class="col-md-4"><span class="text-muted">Género:</span> {{ postulante.get_genero_display }}</div>
+      <div class="col-md-4"><span class="text-muted">Nacimiento:</span> {{ postulante.fecha_nacimiento|date:"d/m/Y" }}</div>
+      <div class="col-md-4"><span class="text-muted">Nacionalidad:</span> {{ postulante.nacionalidad }}</div>
+      <div class="col-12"><span class="text-muted">Sector:</span> {{ postulante.get_sector_display }}</div>
     </div>
   </div>
 
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Domicilio y Contacto</h6>
     <div class="row g-2 small">
-      <div class="col-md-4">
-        <span class="text-muted">País:</span> {{ postulante.pais }}
-      </div>
-      <div class="col-md-4">
-        <span class="text-muted">Provincia:</span> {{ postulante.provincia }}
-      </div>
-      <div class="col-md-4">
-        <span class="text-muted">Ciudad:</span> {{ postulante.ciudad }}
-      </div>
-      <div class="col-md-6">
-        <span class="text-muted">Dirección:</span> {{ postulante.calle_principal }} {{ postulante.numero }}, {{ postulante.calle_secundaria }}
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted">Celular:</span> {{ postulante.telefono_celular }}
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted">Correo:</span> {{ postulante.usuario.email }}
-      </div>
+      <div class="col-md-4"><span class="text-muted">País:</span> {{ postulante.pais }}</div>
+      <div class="col-md-4"><span class="text-muted">Provincia:</span> {{ postulante.provincia }}</div>
+      <div class="col-md-4"><span class="text-muted">Ciudad:</span> {{ postulante.ciudad }}</div>
+      <div class="col-md-6"><span class="text-muted">Dirección:</span> {{ postulante.calle_principal }} {{ postulante.numero }}, {{ postulante.calle_secundaria }}</div>
+      <div class="col-md-3"><span class="text-muted">Celular:</span> {{ postulante.telefono_celular }}</div>
+      <div class="col-md-3"><span class="text-muted">Correo:</span> {{ postulante.usuario.email }}</div>
     </div>
   </div>
 
@@ -60,257 +34,234 @@
     <h6 class="fw-semibold border-bottom pb-2">Familiares en IESS/BIESS</h6>
     <table class="table table-sm table-bordered small">
       <thead class="table-light">
-        <tr>
-          <th>Nombres</th>
-          <th>Parentesco</th>
-          <th>Institución</th>
-          <th>Área</th>
-          <th>Cargo</th>
-        </tr>
+        <tr><th>Nombres</th><th>Parentesco</th><th>Institución</th><th>Área</th><th>Cargo</th></tr>
       </thead>
       <tbody>
         {% for f in familiares %}
-        <tr>
-          <td>{{ f.nombres }}</td>
-          <td>{{ f.get_parentesco_display }}</td>
-          <td>{{ f.get_institucion_display }}</td>
-          <td>{{ f.area }}</td>
-          <td>{{ f.cargo }}</td>
-        </tr>
+        <tr><td>{{ f.nombres }}</td><td>{{ f.get_parentesco_display }}</td><td>{{ f.get_institucion_display }}</td><td>{{ f.area }}</td><td>{{ f.cargo }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %} {% if formaciones %}
+  {% endif %}
+
+  {% if formaciones %}
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Formación Académica</h6>
     <table class="table table-sm table-bordered small">
       <thead class="table-light">
-        <tr>
-          <th>Nivel</th>
-          <th>Título</th>
-          <th>Institución</th>
-          <th>Área</th>
-          <th>SENESCYT</th>
-        </tr>
+        <tr><th>Nivel</th><th>Título</th><th>Institución</th><th>Área</th><th>SENESCYT</th></tr>
       </thead>
       <tbody>
         {% for f in formaciones %}
-        <tr>
-          <td>{{ f.get_nivel_display }}</td>
-          <td>{{ f.titulo }}</td>
-          <td>{{ f.institucion }}</td>
-          <td>{{ f.get_area_estudios_display }}</td>
-          <td>{{ f.num_senescyt }}</td>
-        </tr>
+        <tr><td>{{ f.get_nivel_display }}</td><td>{{ f.titulo }}</td><td>{{ f.institucion }}</td><td>{{ f.get_area_estudios_display }}</td><td>{{ f.num_senescyt }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %} {% if experiencias %}
+  {% endif %}
+
+  {% if experiencias %}
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Experiencia Profesional</h6>
     <table class="table table-sm table-bordered small">
       <thead class="table-light">
-        <tr>
-          <th>Tipo</th>
-          <th>Cargo</th>
-          <th>Institución</th>
-          <th>Período</th>
-          <th>Tiempo</th>
-        </tr>
+        <tr><th>Tipo</th><th>Cargo</th><th>Institución</th><th>Período</th><th>Tiempo</th></tr>
       </thead>
       <tbody>
         {% for e in experiencias %}
-        <tr>
-          <td>{{ e.get_tipo_display }}</td>
-          <td>{{ e.cargo }}</td>
-          <td>{{ e.institucion }}</td>
-          <td>
-            {{ e.fecha_inicio|date:"d/m/Y" }} — {{ e.fecha_fin|date:"d/m/Y" }}
-          </td>
-          <td>{{ e.tiempo_calculado.texto }}</td>
-        </tr>
+        <tr><td>{{ e.get_tipo_display }}</td><td>{{ e.cargo }}</td><td>{{ e.institucion }}</td>
+            <td>{{ e.fecha_inicio|date:"d/m/Y" }} — {{ e.fecha_fin|date:"d/m/Y" }}</td>
+            <td>{{ e.tiempo_calculado.texto }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %} {% if capacitaciones %}
+  {% endif %}
+
+  {% if capacitaciones %}
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Capacitación</h6>
     <table class="table table-sm table-bordered small">
       <thead class="table-light">
-        <tr>
-          <th>Tipo</th>
-          <th>Nombre</th>
-          <th>Institución</th>
-          <th>Horas</th>
-        </tr>
+        <tr><th>Tipo</th><th>Nombre</th><th>Institución</th><th>Horas</th></tr>
       </thead>
       <tbody>
         {% for c in capacitaciones %}
-        <tr>
-          <td>{{ c.get_tipo_evento_display }}</td>
-          <td>{{ c.nombre }}</td>
-          <td>{{ c.institucion }}</td>
-          <td>{{ c.horas }}h</td>
-        </tr>
+        <tr><td>{{ c.get_tipo_evento_display }}</td><td>{{ c.nombre }}</td><td>{{ c.institucion }}</td><td>{{ c.horas }}h</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %} {% if publicaciones %}
+  {% endif %}
+
+  {% if publicaciones %}
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Publicaciones</h6>
     <table class="table table-sm table-bordered small">
       <thead class="table-light">
-        <tr>
-          <th>Título</th>
-          <th>Tipo</th>
-          <th>Medio</th>
-          <th>Fecha</th>
-        </tr>
+        <tr><th>Título</th><th>Tipo</th><th>Medio</th><th>Fecha</th></tr>
       </thead>
       <tbody>
         {% for p in publicaciones %}
-        <tr>
-          <td>{{ p.titulo }}</td>
-          <td>{{ p.get_tipo_display }}</td>
-          <td>{{ p.medio }}</td>
-          <td>{{ p.fecha|date:"d/m/Y" }}</td>
-        </tr>
+        <tr><td>{{ p.titulo }}</td><td>{{ p.get_tipo_display }}</td><td>{{ p.medio }}</td><td>{{ p.fecha|date:"d/m/Y" }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %} {% if inhabilidades %}
+  {% endif %}
+
+  {% if inhabilidades %}
   <div class="mb-4">
     <h6 class="fw-semibold border-bottom pb-2">Inhabilidades</h6>
     <div class="row g-1 small">
       <div class="col-md-9">1. Goce de derechos de participación política</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p1_goce_derechos %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p1_goce_derechos %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">2. Inhabilitado para ejercer el comercio</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p2_inhabilitado_comercio %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p2_inhabilitado_comercio %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">3. En mora con el Estado o SuperBancos</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p3_mora_obligaciones %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p3_mora_obligaciones %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">4. Vínculo con instituciones financieras</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p4_vinculo_financiero %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p4_vinculo_financiero %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">5. Funcionario del IESS/BIESS</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p5_funcionario_iess %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p5_funcionario_iess %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">6. Interés en compañías aseguradoras</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p6_interes_aseguradoras %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p6_interes_aseguradoras %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">7. Removido por Organismo de Control</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p7_removido_organismo %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p7_removido_organismo %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">8. Obligaciones pendientes con el SRI</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p8_sri %}Sí{% else %}No{% endif %}
-      </div>
-      <div class="col-md-9">
-        9. Castigo de obligaciones por institución financiera
-      </div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p9_castigo_financiero %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p8_sri %}Sí{% else %}No{% endif %}</div>
+      <div class="col-md-9">9. Castigo de obligaciones por institución financiera</div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p9_castigo_financiero %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">10. Litigando contra el IESS/BIESS</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p10_litigio_iess %}Sí{% else %}No{% endif %}
-      </div>
-      <div class="col-md-9">
-        11. Procesado por corrupción o crimen organizado
-      </div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p11_procesado_corrupcion %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p10_litigio_iess %}Sí{% else %}No{% endif %}</div>
+      <div class="col-md-9">11. Procesado por corrupción o crimen organizado</div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p11_procesado_corrupcion %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">12. Responsabilidades por la Contraloría</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p12_contraloria %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p12_contraloria %}Sí{% else %}No{% endif %}</div>
       <div class="col-md-9">13. Registrado en la base de datos de la UAFE</div>
-      <div class="col-md-3 fw-semibold">
-        {% if inhabilidades.p13_uafe %}Sí{% else %}No{% endif %}
-      </div>
+      <div class="col-md-3 fw-semibold">{% if inhabilidades.p13_uafe %}Sí{% else %}No{% endif %}</div>
     </div>
   </div>
   {% endif %}
 
   <div class="border rounded p-3 bg-light small mb-4">
     <p class="fw-semibold mb-2">Declaración del postulante</p>
-    <p class="mb-2" style="text-align: justify; font-size: 0.8rem">
-      <strong>1.</strong> Autorizo de manera libre y voluntaria, emitiendo
-      consentimiento explícito al Instituto Ecuatoriano de Seguridad Social,
-      para el uso de mis datos personales dentro del concurso de méritos y
-      oposición para la selección de los Miembros Principales y Alternos del
-      Directorio del Banco del Instituto Ecuatoriano de Seguridad Social
-      (BIESS), en Representación de los Afiliados, Jubilados y Empleadores, de
-      conformidad con lo prescrito en el artículo 7 de la Ley Orgánica de
-      Protección de Datos Personales.
-    </p>
-    <p class="mb-2" style="text-align: justify; font-size: 0.8rem">
-      <strong>2.</strong> Declaro que la información del presente formulario y
-      documentación adjunta corresponde a la verdad y autorizo al Instituto
-      Ecuatoriano de Seguridad Social para que se compruebe ante cualquier
-      organismo público o privado su veracidad.
-    </p>
-    <p class="mb-2" style="text-align: justify; font-size: 0.8rem">
-      <strong>3.</strong> Acepto expresamente cumplir con las normas aplicables
-      al concurso de méritos y oposición para la selección de los Miembros
-      Principales y Alternos del Directorio del Banco del Instituto Ecuatoriano
-      de Seguridad Social (BIESS), en Representación de los Afiliados, Jubilados
-      y Empleadores; así como las resoluciones y disposiciones impartidas por el
-      Instituto Ecuatoriano de Seguridad Social. En caso de incumplimiento de
-      requisitos o encontrarme inmerso/a en las prohibiciones o inhabilidades
-      acepto mi descalificación del proceso.
-    </p>
-    <p class="mb-2" style="text-align: justify; font-size: 0.8rem">
-      <strong>4.</strong> Acepto que mi nombre como postulante al concurso de
-      méritos y oposición para la selección de los Miembros Principales y
-      Alternos del Directorio del Banco del Instituto Ecuatoriano de Seguridad
-      Social (BIESS), en Representación de los Afiliados, Jubilados y
-      Empleadores; sea publicado en la página web del IESS - BIESS.
-    </p>
-    <p class="mb-0" style="text-align: justify; font-size: 0.8rem">
-      <strong>5.</strong> El presente formulario, debe ser impreso y con firma
-      manuscrita, entregado junto con los requisitos solicitados, en el lugar,
-      fecha y horario establecido por el Instituto Ecuatoriano de Seguridad
-      Social.
-    </p>
+    <p class="mb-2" style="text-align:justify;font-size:.8rem"><strong>1.</strong> Autorizo de manera libre y voluntaria, emitiendo consentimiento explícito al Instituto Ecuatoriano de Seguridad Social, para el uso de mis datos personales dentro del concurso de méritos y oposición para la selección de los Miembros Principales y Alternos del Directorio del Banco del Instituto Ecuatoriano de Seguridad Social (BIESS), en Representación de los Afiliados, Jubilados y Empleadores, de conformidad con lo prescrito en el artículo 7 de la Ley Orgánica de Protección de Datos Personales.</p>
+    <p class="mb-2" style="text-align:justify;font-size:.8rem"><strong>2.</strong> Declaro que la información del presente formulario y documentación adjunta corresponde a la verdad y autorizo al Instituto Ecuatoriano de Seguridad Social para que se compruebe ante cualquier organismo público o privado su veracidad.</p>
+    <p class="mb-2" style="text-align:justify;font-size:.8rem"><strong>3.</strong> Acepto expresamente cumplir con las normas aplicables al concurso de méritos y oposición para la selección de los Miembros Principales y Alternos del Directorio del Banco del Instituto Ecuatoriano de Seguridad Social (BIESS); así como las resoluciones y disposiciones impartidas por el Instituto Ecuatoriano de Seguridad Social. En caso de incumplimiento de requisitos o encontrarme inmerso/a en las prohibiciones o inhabilidades acepto mi descalificación del proceso.</p>
+    <p class="mb-2" style="text-align:justify;font-size:.8rem"><strong>4.</strong> Acepto que mi nombre como postulante sea publicado en la página web del IESS - BIESS.</p>
+    <p class="mb-0" style="text-align:justify;font-size:.8rem"><strong>5.</strong> El presente formulario, debe ser impreso y con firma manuscrita, entregado junto con los requisitos solicitados, en el lugar, fecha y horario establecido por el Instituto Ecuatoriano de Seguridad Social.</p>
   </div>
 
-  <form method="post">
-    {% csrf_token %}
-    <div class="d-flex justify-content-between">
-      <a
-        href="{% url 'paso_inhabilidades' %}"
-        class="btn btn-outline-secondary px-4"
-        >← Revisar</a
-      >
-      <div class="d-flex gap-2">
-        <a
-          href="{% url 'descargar_pdf' %}"
-          class="btn btn-outline-secondary px-4"
-          target="_blank"
-        >
-          Descargar PDF
-        </a>
-        <button type="submit" class="btn btn-success px-4 fw-semibold">
-          Enviar postulación definitivamente
-        </button>
-      </div>
+  <div class="d-flex justify-content-between">
+    <a href="{% url 'paso_inhabilidades' %}" class="btn btn-outline-secondary px-4">← Revisar</a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'descargar_pdf' %}" class="btn btn-outline-secondary px-4" target="_blank">Descargar PDF</a>
+      <button type="button" class="btn btn-success px-4 fw-semibold"
+              data-bs-toggle="modal" data-bs-target="#modalDocumentos">
+        Enviar postulación definitivamente
+      </button>
     </div>
-  </form>
+  </div>
 </div>
+
+<!-- ── Modal de documentos obligatorios ───────────────────────────────────── -->
+<div class="modal fade" id="modalDocumentos" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header" style="background:#003580;color:white;">
+        <h6 class="modal-title mb-0 fw-semibold">📎 Documentos obligatorios para envío</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" id="form-envio">
+        {% csrf_token %}
+        <div class="modal-body">
+
+          <div class="alert alert-warning small py-2 mb-3">
+            <strong>⚠ Importante:</strong> Ambos documentos son <strong>obligatorios</strong>.
+            Solo se aceptan archivos <strong>PDF</strong> con un tamaño máximo de <strong>2 MB</strong> cada uno.
+          </div>
+
+          {% if errores_docs %}
+          <div class="alert alert-danger small py-2 mb-3">
+            <strong>Errores encontrados:</strong>
+            <ul class="mb-0 mt-1">
+              {% for error in errores_docs %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <!-- Documento 1: Declaración Juramentada -->
+          <div class="border rounded p-3 mb-3">
+            <label class="form-label fw-semibold">
+              📄 Declaración Juramentada <span class="text-danger">*</span>
+            </label>
+            <input type="file" name="declaracion_juramentada" id="id_declaracion"
+                   class="form-control" accept=".pdf"
+                   onchange="validarArchivo(this, 'feedback-declaracion')">
+            <div id="feedback-declaracion" class="mt-1 small"></div>
+          </div>
+
+          <!-- Documento 2: Constancia -->
+          <div class="border rounded p-3 mb-3">
+            <label class="form-label fw-semibold">
+              📄 Constancia <span class="text-danger">*</span>
+            </label>
+            <input type="file" name="constancia" id="id_constancia"
+                   class="form-control" accept=".pdf"
+                   onchange="validarArchivo(this, 'feedback-constancia')">
+            <div id="feedback-constancia" class="mt-1 small"></div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success fw-semibold" id="btn-confirmar-envio">
+            Confirmar y enviar postulación
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const MAX_2MB = 2 * 1024 * 1024;
+
+  function validarArchivo(input, feedbackId) {
+    const feedback = document.getElementById(feedbackId);
+    const archivo  = input.files[0];
+    if (!archivo) { feedback.innerHTML = ''; return; }
+
+    if (!archivo.name.toLowerCase().endsWith('.pdf')) {
+      feedback.innerHTML = '<span class="text-danger">⚠ Solo se permiten archivos PDF.</span>';
+      input.value = '';
+      return;
+    }
+    if (archivo.size > MAX_2MB) {
+      const mb = (archivo.size / 1024 / 1024).toFixed(2);
+      feedback.innerHTML = `<span class="text-danger">⚠ El archivo pesa ${mb} MB. El máximo permitido es 2 MB.</span>`;
+      input.value = '';
+      return;
+    }
+    const kb = (archivo.size / 1024).toFixed(1);
+    feedback.innerHTML = `<span class="text-success">✓ ${archivo.name} (${kb} KB)</span>`;
+  }
+
+  {% if mostrar_modal %}
+  document.addEventListener('DOMContentLoaded', function () {
+    new bootstrap.Modal(document.getElementById('modalDocumentos')).show();
+  });
+  {% endif %}
+</script>
 {% endblock %}
