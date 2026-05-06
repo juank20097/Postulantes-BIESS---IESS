@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from .forms import RegistroForm, LoginForm
-from postulaciones.services import consultar_registro_civil, parsear_datos_rc
+from postulaciones.services import consultar_registro_civil, parsear_datos_rc, consultar_calificacion_derecho
 import json
 
 
@@ -18,28 +18,29 @@ def registro(request):
         form = RegistroForm(request.POST)
         if form.is_valid():
             user = form.save()
+            cedula = form.cleaned_data['cedula']
 
             # Precargar datos RC en el postulante
-            cedula = form.cleaned_data['cedula']
             cuerpo = consultar_registro_civil(cedula)
             if cuerpo:
                 datos = parsear_datos_rc(cuerpo)
                 if datos:
                     from postulaciones.models import Postulante
                     postulante, _ = Postulante.objects.get_or_create(usuario=user)
-                    postulante.cedula           = cedula
-                    postulante.nombres          = datos['nombres']
-                    postulante.apellidos        = datos['apellidos']
-                    postulante.genero           = datos['genero']
-                    postulante.estado_civil     = datos['estado_civil']
-                    postulante.fecha_nacimiento = datos['fecha_nacimiento']
-                    postulante.nacionalidad     = datos['nacionalidad']
+                    postulante.cedula                = cedula
+                    postulante.nombres               = datos['nombres']
+                    postulante.apellidos             = datos['apellidos']
+                    postulante.genero                = datos['genero']
+                    postulante.estado_civil          = datos['estado_civil']
+                    postulante.fecha_nacimiento      = datos['fecha_nacimiento']
+                    postulante.nacionalidad          = datos['nacionalidad']
+                    postulante.sector                = request.POST.get('rc_sector', '')
+                    postulante.sectores_disponibles  = request.POST.get('rc_sectores', '')
                     postulante.save()
 
             from .email_service import crear_otp, enviar_otp_correo
             codigo = crear_otp(user)
             enviar_otp_correo(user.email, codigo)
-            # Guardamos el id del usuario en sesión para la pantalla OTP
             request.session['otp_user_id'] = user.pk
             messages.success(request, 'Cuenta creada. Ingresa el código que enviamos a tu correo.')
             return redirect('verificar_otp')
@@ -52,8 +53,8 @@ def registro(request):
 def consultar_cedula_ajax(request):
     if request.method == 'POST':
         try:
-            body          = json.loads(request.body)
-            cedula        = body.get('cedula', '').strip()
+            body            = json.loads(request.body)
+            cedula          = body.get('cedula', '').strip()
             codigo_dactilar = body.get('codigo_dactilar', '').strip()
         except Exception:
             return JsonResponse({'ok': False, 'error': 'Petición inválida.'})
@@ -61,7 +62,6 @@ def consultar_cedula_ajax(request):
         if not cedula or len(cedula) != 10 or not cedula.isdigit():
             return JsonResponse({'ok': False, 'error': 'Cédula inválida.'})
 
-        # Verificar código dactilar
         from django.conf import settings
         if not codigo_dactilar:
             return JsonResponse({'ok': False, 'error': 'Ingrese el código dactilar.', 'pedir_dactilar': True})
@@ -69,12 +69,11 @@ def consultar_cedula_ajax(request):
         if codigo_dactilar.upper() != settings.CODIGO_DACTILAR.upper():
             return JsonResponse({'ok': False, 'error': 'Código dactilar incorrecto.', 'pedir_dactilar': True})
 
-        # Verificar si ya existe cuenta
         from usuarios.models import PostulanteUser
         if PostulanteUser.objects.filter(cedula=cedula).exists():
             return JsonResponse({'ok': False, 'error': 'Ya existe una cuenta registrada con esta cédula.'})
 
-        # Consultar WS
+        # Consultar Registro Civil
         cuerpo = consultar_registro_civil(cedula)
         if not cuerpo:
             return JsonResponse({'ok': False, 'error': 'No se encontró información para esta cédula en el Registro Civil.'})
@@ -82,6 +81,11 @@ def consultar_cedula_ajax(request):
         datos = parsear_datos_rc(cuerpo)
         if not datos:
             return JsonResponse({'ok': False, 'error': 'Error al procesar los datos del Registro Civil.'})
+
+        # Verificar condición de afiliación — puede retornar múltiples sectores
+        calificacion = consultar_calificacion_derecho(cedula)
+        if not calificacion['puede_postular']:
+            return JsonResponse({'ok': False, 'error': calificacion['mensaje']})
 
         return JsonResponse({
             'ok': True,
@@ -93,6 +97,8 @@ def consultar_cedula_ajax(request):
                 'estado_civil':     datos['estado_civil'],
                 'fecha_nacimiento': str(datos['fecha_nacimiento']) if datos['fecha_nacimiento'] else '',
                 'nacionalidad':     datos['nacionalidad'],
+                'sectores':         calificacion['sectores'],        # lista completa
+                'sector':           calificacion['sector'],          # pre-asignado si es uno solo
             }
         })
 
@@ -126,6 +132,7 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'Ha cerrado sesión correctamente.')
     return redirect('login')
+
 
 def verificar_otp(request):
     user_id = request.session.get('otp_user_id')

@@ -11,17 +11,12 @@ def validar_pdf(archivo):
 # ── Helpers de upload_to ──────────────────────────────────────────────────────
 
 def _carpeta_usuario(postulante):
-    """
-    Devuelve la carpeta raíz del usuario dentro del bucket:
-    BIESS-XXXXXXXX_1234567890
-    """
     cedula = postulante.usuario.cedula if postulante.usuario_id else 'sin_cedula'
     codigo = postulante.codigo_unico or 'NUEVO'
     return f'{codigo}_{cedula}'
 
 
 def upload_organizacion(instance, filename):
-    """BIESS-XXXX_cedula/organizaciones/organizacion_cedula.pdf"""
     cedula  = instance.usuario.cedula
     carpeta = _carpeta_usuario(instance)
     ext     = filename.rsplit('.', 1)[-1].lower()
@@ -29,7 +24,6 @@ def upload_organizacion(instance, filename):
 
 
 def upload_formacion(instance, filename):
-    """BIESS-XXXX_cedula/formacion/formacion_cedula_titulo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
@@ -38,7 +32,6 @@ def upload_formacion(instance, filename):
 
 
 def upload_experiencia(instance, filename):
-    """BIESS-XXXX_cedula/experiencia/experiencia_cedula_cargo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     cargo   = instance.cargo[:40].replace(' ', '_').lower() if instance.cargo else 'doc'
@@ -47,7 +40,6 @@ def upload_experiencia(instance, filename):
 
 
 def upload_capacitacion(instance, filename):
-    """BIESS-XXXX_cedula/capacitacion/capacitacion_cedula_nombre.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     nombre  = instance.nombre[:40].replace(' ', '_').lower() if instance.nombre else 'doc'
@@ -56,7 +48,6 @@ def upload_capacitacion(instance, filename):
 
 
 def upload_publicacion(instance, filename):
-    """BIESS-XXXX_cedula/publicaciones/publicacion_cedula_titulo.pdf"""
     cedula  = instance.postulante.usuario.cedula
     carpeta = _carpeta_usuario(instance.postulante)
     titulo  = instance.titulo[:40].replace(' ', '_').lower() if instance.titulo else 'doc'
@@ -68,11 +59,6 @@ def upload_publicacion(instance, filename):
 
 
 class Postulante(models.Model):
-    """
-    Modelo central del formulario BIESS.
-    EF-12: agrupa toda la información del postulante
-    separada en secciones según el RF.
-    """
 
     SECTOR_CHOICES = [
         ('AFILIADO',  'Miembro Principal y Alterno — Sector Afiliados'),
@@ -106,9 +92,11 @@ class Postulante(models.Model):
         on_delete=models.CASCADE,
         related_name='postulante'
     )
-    codigo_unico = models.CharField(max_length=20, unique=True, blank=True)
-    sector       = models.CharField(max_length=15, choices=SECTOR_CHOICES, blank=True)
-    estado       = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
+    codigo_unico          = models.CharField(max_length=20, unique=True, blank=True)
+    sector                = models.CharField(max_length=15, choices=SECTOR_CHOICES, blank=True)
+    # Sectores detectados en el registro — lista separada por comas: "AFILIADO,EMPLEADOR"
+    sectores_disponibles  = models.CharField(max_length=50, blank=True)
+    estado                = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='BORRADOR')
 
     nombres          = models.CharField(max_length=100, blank=True)
     apellidos        = models.CharField(max_length=100, blank=True)
@@ -152,15 +140,17 @@ class Postulante(models.Model):
             self.codigo_unico = f'BIESS-{str(uuid.uuid4())[:8].upper()}'
         super().save(*args, **kwargs)
 
+    def get_sectores_lista(self):
+        """Retorna los sectores disponibles como lista Python."""
+        if self.sectores_disponibles:
+            return [s.strip() for s in self.sectores_disponibles.split(',') if s.strip()]
+        return [self.sector] if self.sector else []
+
     def __str__(self):
         return f'{self.codigo_unico} — {self.apellidos} {self.nombres}'
 
 
 class FamiliarIESS(models.Model):
-    """
-    EF-12 sección 1.3: familiares dentro del segundo grado
-    de consanguinidad y cuarto de afinidad trabajando en IESS/BIESS.
-    """
     PARENTESCO_CHOICES = [
         ('CONYUGE',       'Cónyuge'),
         ('CONVIVIENTE',   'Conviviente'),
@@ -183,9 +173,7 @@ class FamiliarIESS(models.Model):
         ('BIESS', 'BIESS'),
     ]
 
-    postulante  = models.ForeignKey(
-        Postulante, on_delete=models.CASCADE, related_name='familiares'
-    )
+    postulante  = models.ForeignKey(Postulante, on_delete=models.CASCADE, related_name='familiares')
     nombres     = models.CharField(max_length=100)
     parentesco  = models.CharField(max_length=20, choices=PARENTESCO_CHOICES)
     institucion = models.CharField(max_length=5,  choices=INSTITUCION_CHOICES)
@@ -201,9 +189,6 @@ class FamiliarIESS(models.Model):
 
 
 class FormacionAcademica(models.Model):
-    """
-    EF-12 sección 1.5: formación académica del postulante.
-    """
     NIVEL_CHOICES = [
         ('TERCER',   'Tercer nivel de grado'),
         ('ESP',      'Cuarto nivel — Especialidad académica'),
@@ -223,9 +208,7 @@ class FormacionAcademica(models.Model):
         ('AFINES',      'Materias afines'),
     ]
 
-    postulante     = models.ForeignKey(
-        Postulante, on_delete=models.CASCADE, related_name='formaciones'
-    )
+    postulante     = models.ForeignKey(Postulante, on_delete=models.CASCADE, related_name='formaciones')
     nivel          = models.CharField(max_length=10, choices=NIVEL_CHOICES)
     institucion    = models.CharField(max_length=200)
     tipo           = models.CharField(max_length=10, choices=TIPO_CHOICES)
@@ -233,10 +216,7 @@ class FormacionAcademica(models.Model):
     area_estudios  = models.CharField(max_length=15, choices=AREA_CHOICES)
     num_senescyt   = models.CharField(max_length=50)
     fecha_senescyt = models.DateField()
-    documento      = models.FileField(
-        upload_to=upload_formacion,
-        validators=[validar_pdf]
-    )
+    documento      = models.FileField(upload_to=upload_formacion, validators=[validar_pdf])
 
     class Meta:
         verbose_name        = 'Formación académica'
@@ -248,18 +228,13 @@ class FormacionAcademica(models.Model):
 
 
 class ExperienciaProfesional(models.Model):
-    """
-    EF-12 sección 1.6: experiencia profesional.
-    """
     TIPO_CHOICES = [
         ('GENERAL',   'General'),
         ('DIRECCION', 'Dirección'),
     ]
     AREA_CHOICES = FormacionAcademica.AREA_CHOICES
 
-    postulante       = models.ForeignKey(
-        Postulante, on_delete=models.CASCADE, related_name='experiencias'
-    )
+    postulante       = models.ForeignKey(Postulante, on_delete=models.CASCADE, related_name='experiencias')
     tipo             = models.CharField(max_length=10, choices=TIPO_CHOICES)
     cargo            = models.CharField(max_length=150)
     institucion      = models.CharField(max_length=200)
@@ -267,10 +242,7 @@ class ExperienciaProfesional(models.Model):
     fecha_fin        = models.DateField()
     actividades_area = models.CharField(max_length=15, choices=AREA_CHOICES)
     descripcion      = models.TextField(max_length=1000)
-    documento        = models.FileField(
-        upload_to=upload_experiencia,
-        validators=[validar_pdf]
-    )
+    documento        = models.FileField(upload_to=upload_experiencia, validators=[validar_pdf])
 
     class Meta:
         verbose_name        = 'Experiencia profesional'
@@ -291,37 +263,27 @@ class ExperienciaProfesional(models.Model):
     def clean(self):
         if self.fecha_inicio and self.fecha_fin:
             if self.fecha_fin < self.fecha_inicio:
-                raise ValidationError(
-                    'La fecha de fin no puede ser anterior a la fecha de inicio.'
-                )
+                raise ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
 
     def __str__(self):
         return f'{self.cargo} en {self.institucion}'
 
 
 class Capacitacion(models.Model):
-    """
-    EF-12 sección 1.8: cursos, seminarios y talleres.
-    """
     TIPO_CHOICES = [
         ('CURSO',     'Curso'),
         ('SEMINARIO', 'Seminario'),
         ('TALLER',    'Taller'),
     ]
 
-    postulante   = models.ForeignKey(
-        Postulante, on_delete=models.CASCADE, related_name='capacitaciones'
-    )
+    postulante   = models.ForeignKey(Postulante, on_delete=models.CASCADE, related_name='capacitaciones')
     tipo_evento  = models.CharField(max_length=10, choices=TIPO_CHOICES)
     nombre       = models.CharField(max_length=200)
     institucion  = models.CharField(max_length=200)
     fecha_inicio = models.DateField()
     fecha_fin    = models.DateField()
     horas        = models.PositiveIntegerField()
-    documento    = models.FileField(
-        upload_to=upload_capacitacion,
-        validators=[validar_pdf]
-    )
+    documento    = models.FileField(upload_to=upload_capacitacion, validators=[validar_pdf])
 
     class Meta:
         verbose_name        = 'Capacitación'
@@ -333,26 +295,18 @@ class Capacitacion(models.Model):
 
 
 class Publicacion(models.Model):
-    """
-    EF-12 sección 1.7: publicaciones e investigaciones académicas.
-    """
     TIPO_CHOICES = [
         ('PUBLICACION',   'Publicación'),
         ('INVESTIGACION', 'Trabajo de investigación'),
     ]
 
-    postulante  = models.ForeignKey(
-        Postulante, on_delete=models.CASCADE, related_name='publicaciones'
-    )
+    postulante  = models.ForeignKey(Postulante, on_delete=models.CASCADE, related_name='publicaciones')
     titulo      = models.CharField(max_length=300)
     tipo        = models.CharField(max_length=15, choices=TIPO_CHOICES)
     medio       = models.CharField(max_length=150)
     fecha       = models.DateField()
     relacionado = models.BooleanField(default=False)
-    documento   = models.FileField(
-        upload_to=upload_publicacion,
-        validators=[validar_pdf]
-    )
+    documento   = models.FileField(upload_to=upload_publicacion, validators=[validar_pdf])
 
     class Meta:
         verbose_name        = 'Publicación'
@@ -364,12 +318,7 @@ class Publicacion(models.Model):
 
 
 class Inhabilidades(models.Model):
-    """
-    EF-12 sección 1.9: las 13 preguntas de inhabilidades.
-    """
-    postulante = models.OneToOneField(
-        Postulante, on_delete=models.CASCADE, related_name='inhabilidades'
-    )
+    postulante = models.OneToOneField(Postulante, on_delete=models.CASCADE, related_name='inhabilidades')
 
     p1_goce_derechos         = models.BooleanField(null=True)
     p2_inhabilitado_comercio = models.BooleanField(null=True)

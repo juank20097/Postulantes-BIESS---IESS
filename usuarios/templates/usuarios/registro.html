@@ -36,13 +36,15 @@
       <form method="post" novalidate id="form-registro">
         {% csrf_token %}
 
-        <!-- Campos hidden para preservar datos RC entre POSTs — populados desde request.POST -->
+        <!-- Campos hidden para preservar datos RC entre POSTs -->
         <input type="hidden" id="hidden-rc-nombres"      name="rc_nombres"      value="{{ request.POST.rc_nombres }}">
         <input type="hidden" id="hidden-rc-apellidos"    name="rc_apellidos"    value="{{ request.POST.rc_apellidos }}">
         <input type="hidden" id="hidden-rc-genero"       name="rc_genero"       value="{{ request.POST.rc_genero }}">
         <input type="hidden" id="hidden-rc-fecha"        name="rc_fecha"        value="{{ request.POST.rc_fecha }}">
         <input type="hidden" id="hidden-rc-estado-civil" name="rc_estado_civil" value="{{ request.POST.rc_estado_civil }}">
         <input type="hidden" id="hidden-rc-dactilar"     name="rc_dactilar"     value="{{ request.POST.rc_dactilar }}">
+        <input type="hidden" id="hidden-rc-sector"       name="rc_sector"       value="{{ request.POST.rc_sector }}">
+        <input type="hidden" id="hidden-rc-sectores"     name="rc_sectores"     value="{{ request.POST.rc_sectores }}">
 
         <!-- Cédula -->
         <div class="mb-3">
@@ -90,6 +92,10 @@
             <div class="col-6"><span class="text-muted">Género:</span> <span id="rc-genero"></span></div>
             <div class="col-6"><span class="text-muted">Nacimiento:</span> <span id="rc-fecha"></span></div>
             <div class="col-12"><span class="text-muted">Estado civil:</span> <span id="rc-estado-civil"></span></div>
+            <div class="col-12 mt-1">
+              <span class="text-muted">Sector(es):</span>
+              <span id="rc-sector" class="fw-semibold text-primary"></span>
+            </div>
           </div>
         </div>
 
@@ -172,6 +178,11 @@
     'DIVORCIADO': 'Divorciado/a', 'VIUDO': 'Viudo/a',
     'UNION_HECHO': 'Unión de hecho',
   };
+  const SECTOR_LABELS = {
+    'AFILIADO':  'Afiliado IESS',
+    'JUBILADO':  'Jubilado IESS',
+    'EMPLEADOR': 'Empleador IESS',
+  };
 
   let cedulaVerificada = false;
 
@@ -184,11 +195,11 @@
     const bloqueRegistro   = document.getElementById('bloque-registro');
     const btnVerificar     = document.getElementById('btn-verificar');
 
-    cedulaFeedback.innerHTML   = '';
-    dactilarFeedback.innerHTML = '';
-    bloqueRc.style.display     = 'none';
+    cedulaFeedback.innerHTML     = '';
+    dactilarFeedback.innerHTML   = '';
+    bloqueRc.style.display       = 'none';
     bloqueRegistro.style.display = 'none';
-    cedulaVerificada           = false;
+    cedulaVerificada             = false;
 
     document.getElementById('id_cedula').classList.remove('is-valid', 'is-invalid');
     document.getElementById('id_dactilar').classList.remove('is-valid', 'is-invalid');
@@ -219,8 +230,9 @@
       const data = await resp.json();
 
       if (data.ok) {
-        const generoTexto = data.datos.genero_texto;
-        const estadoCivil = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
+        const generoTexto  = data.datos.genero_texto;
+        const estadoCivil  = ESTADO_CIVIL_LABELS[data.datos.estado_civil] || data.datos.estado_civil;
+        const sectoresTexto = data.datos.sectores.map(s => SECTOR_LABELS[s] || s).join(' / ');
 
         // Rellenar spans visibles
         document.getElementById('rc-nombres').textContent      = data.datos.nombres;
@@ -228,6 +240,7 @@
         document.getElementById('rc-genero').textContent       = generoTexto;
         document.getElementById('rc-fecha').textContent        = data.datos.fecha_nacimiento;
         document.getElementById('rc-estado-civil').textContent = estadoCivil;
+        document.getElementById('rc-sector').textContent       = sectoresTexto;
 
         // Guardar en hidden para sobrevivir el POST
         document.getElementById('hidden-rc-nombres').value      = data.datos.nombres;
@@ -236,6 +249,8 @@
         document.getElementById('hidden-rc-fecha').value        = data.datos.fecha_nacimiento;
         document.getElementById('hidden-rc-estado-civil').value = estadoCivil;
         document.getElementById('hidden-rc-dactilar').value     = codigoDactilar;
+        document.getElementById('hidden-rc-sector').value       = data.datos.sector;
+        document.getElementById('hidden-rc-sectores').value     = data.datos.sectores.join(',');
 
         bloqueRc.style.display       = 'block';
         bloqueRegistro.style.display = 'block';
@@ -295,13 +310,13 @@
       .join('');
 
     if (listaErrores) {
-      // Restaurar datos RC desde hidden (populados por Django con request.POST)
       const rcNombres     = document.getElementById('hidden-rc-nombres').value;
       const rcApellidos   = document.getElementById('hidden-rc-apellidos').value;
       const rcGenero      = document.getElementById('hidden-rc-genero').value;
       const rcFecha       = document.getElementById('hidden-rc-fecha').value;
       const rcEstadoCivil = document.getElementById('hidden-rc-estado-civil').value;
       const rcDactilar    = document.getElementById('hidden-rc-dactilar').value;
+      const rcSectores    = document.getElementById('hidden-rc-sectores').value;
 
       if (rcNombres) {
         document.getElementById('rc-nombres').textContent      = rcNombres;
@@ -309,19 +324,22 @@
         document.getElementById('rc-genero').textContent       = rcGenero;
         document.getElementById('rc-fecha').textContent        = rcFecha;
         document.getElementById('rc-estado-civil').textContent = rcEstadoCivil;
+        // Restaurar texto de sectores
+        const sectoresTexto = rcSectores.split(',')
+          .filter(s => s)
+          .map(s => ({'AFILIADO':'Afiliado IESS','JUBILADO':'Jubilado IESS','EMPLEADOR':'Empleador IESS'}[s] || s))
+          .join(' / ');
+        document.getElementById('rc-sector').textContent = sectoresTexto;
       }
 
-      // Restaurar código dactilar en el input
       if (rcDactilar) {
         document.getElementById('id_dactilar').value = rcDactilar;
       }
 
-      // Mostrar bloques
       document.getElementById('bloque-rc').style.display       = 'block';
       document.getElementById('bloque-registro').style.display = 'block';
       cedulaVerificada = true;
 
-      // Restaurar botón verificado
       const btnV = document.getElementById('btn-verificar');
       btnV.textContent = '✓ Identidad verificada';
       btnV.classList.replace('btn-outline-primary', 'btn-success');
@@ -330,7 +348,6 @@
       document.getElementById('id_cedula').classList.add('is-valid');
       document.getElementById('id_dactilar').classList.add('is-valid');
 
-      // Mostrar popup con errores
       document.getElementById('modal-errores-body').innerHTML = `<ul class="mb-0">${listaErrores}</ul>`;
       new bootstrap.Modal(document.getElementById('modalErrores')).show();
     }

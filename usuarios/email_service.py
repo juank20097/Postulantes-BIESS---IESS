@@ -3,10 +3,11 @@ import random
 import logging
 from django.utils import timezone
 from datetime import timedelta
+from decouple import config
 
 logger = logging.getLogger(__name__)
 
-CORREO_ENDPOINT = 'http://localhost:8080/ws_correo/api/correo/enviar'
+CORREO_ENDPOINT = config('WS_CORREO')
 
 
 def generar_otp():
